@@ -545,6 +545,71 @@ textarea:focus {
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+/* VanillaJS Datepicker Styling & Disabled Dates */
+.datepicker {
+    z-index: 2000 !important;
+}
+
+.datepicker-picker {
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(60, 60, 67, 0.15) !important;
+    padding: 12px !important;
+    font-family: var(--font-main) !important;
+}
+
+.datepicker-header .datepicker-controls button {
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    color: var(--apple-label) !important;
+    transition: background 0.15s ease !important;
+}
+
+.datepicker-header .datepicker-controls button:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+
+.datepicker-cell {
+    border-radius: 8px !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+}
+
+.datepicker-cell.selected,
+.datepicker-cell.selected:hover {
+    background: var(--apple-blue) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.datepicker-cell.focused:not(.selected) {
+    background: rgba(0, 113, 227, 0.1) !important;
+}
+
+/* Faded and disabled dates */
+.datepicker-picker .datepicker-cell.disabled,
+.datepicker-picker .datepicker-cell.disabled:hover,
+.datepicker-cell.disabled,
+.datepicker-cell.disabled:hover,
+.datepicker-view .day.disabled,
+.datepicker-view .month.disabled,
+.datepicker-view .year.disabled {
+    color: #8e8e93 !important;
+    opacity: 0.22 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    text-decoration: line-through rgba(142, 142, 147, 0.4) !important;
+}
+
+.datepicker-cell.prev:not(.disabled),
+.datepicker-cell.next:not(.disabled) {
+    color: #8e8e93 !important;
+    opacity: 0.6 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
     .airasia-modal-layout {

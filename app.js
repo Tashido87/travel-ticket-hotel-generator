@@ -25,6 +25,84 @@ import {
     shareAirAsiaTicket
 } from './airasia-converter.js';
 
+// --- DATE HELPER & PAIRED DATEPICKER LOGIC ---
+function parseDateInput(value) {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : new Date(value.getFullYear(), value.getMonth(), value.getDate(), 0, 0, 0, 0);
+    const safeStr = String(value).trim();
+    if (!safeStr) return null;
+
+    const parts = safeStr.split(/[-\/]/);
+    if (parts.length === 3) {
+        let day, month, year;
+        if (parts[0].length === 4) {
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            day = parseInt(parts[2], 10);
+        } else {
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            year = parseInt(parts[2], 10);
+        }
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year) && year > 1900 && month >= 0 && month < 12 && day >= 1 && day <= 31) {
+            return new Date(year, month, day, 0, 0, 0, 0);
+        }
+    }
+    const d = new Date(safeStr);
+    return (d && !isNaN(d.getTime())) ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0) : null;
+}
+
+function setupPairedDatepickers(arrivalId, departureId) {
+    const arrEl = document.getElementById(arrivalId);
+    const depEl = document.getElementById(departureId);
+    if (!arrEl || !depEl) return null;
+
+    function sync() {
+        const arrDate = parseDateInput(arrEl.value);
+        if (!depEl.datepicker) return;
+
+        if (arrDate) {
+            const arrStr = `${String(arrDate.getDate()).padStart(2, '0')}/${String(arrDate.getMonth() + 1).padStart(2, '0')}/${arrDate.getFullYear()}`;
+            depEl.datepicker.setOptions({
+                minDate: arrStr,
+                defaultViewDate: arrStr
+            });
+
+            if (typeof depEl.datepicker.setFocusedDate === 'function') {
+                depEl.datepicker.setFocusedDate(arrDate);
+            }
+
+            // If departure date is earlier than arrival, clear it
+            const curDep = parseDateInput(depEl.value);
+            if (curDep && curDep.getTime() < arrDate.getTime()) {
+                depEl.datepicker.setDate({ clear: true });
+                depEl.value = '';
+                showToast('Departure date was earlier than arrival date and has been cleared.', 'info');
+            }
+        } else {
+            depEl.datepicker.setOptions({
+                minDate: null
+            });
+        }
+    }
+
+    arrEl.addEventListener('changeDate', sync);
+    arrEl.addEventListener('change', sync);
+    arrEl.addEventListener('input', sync);
+
+    depEl.addEventListener('show', sync);
+    depEl.addEventListener('focus', sync);
+
+    if (arrEl.value) {
+        sync();
+    }
+
+    return sync;
+}
+
+let syncModalDates = null;
+let syncQuickDates = null;
+
 // --- INITIALIZE DATEPICKERS ---
 function initDatepickers() {
     const defaultOptions = {
@@ -46,6 +124,9 @@ function initDatepickers() {
             new window.Datepicker(el, defaultOptions);
         }
     });
+
+    syncQuickDates = setupPairedDatepickers('service_hotel_arrival', 'service_hotel_departure');
+    syncModalDates = setupPairedDatepickers('agoda_arrival_date', 'agoda_departure_date');
 }
 
 // --- AGODA HOTEL BOOKING CONTROLLER ---
@@ -156,6 +237,10 @@ function initAgodaHotelFeature() {
         }
         if (document.getElementById('agoda_remarks_special')) {
             document.getElementById('agoda_remarks_special').value = data.remarksSpecial || 'NonSmoke,LargeBed';
+        }
+
+        if (typeof syncModalDates === 'function') {
+            syncModalDates();
         }
 
         updatePreview();
