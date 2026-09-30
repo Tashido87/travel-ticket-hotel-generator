@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Document & E-Ticket Generator</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- VanillaJS Datepicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/css/datepicker.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/js/datepicker-full.min.js"></script>
+    
+    <!-- jsPDF, html2canvas, PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="brand-section">
+            <div class="brand-icon">
+                <i class="fa-solid fa-paper-plane"></i>
+            </div>
+            <div class="brand-text">
+                <h1>Travel Document Generator</h1>
+                <p>Agoda Hotel Confirmations & AirAsia / VietJet E-Tickets</p>
+            </div>
+        </div>
+        <div class="header-badge" id="todayBadge">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="headerTodayDateText">Today</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-wrapper">
+        
+        <!-- FEATURE 1: AGODA HOTEL BOOKING -->
+        <section class="service-panel" id="chinaHotelPanel">
+            <div class="service-panel-header">
+                <span class="service-panel-icon" style="background: rgba(225, 37, 27, 0.1); color: #e1251b;">
+                    <i class="fa-solid fa-hotel"></i>
+                </span>
+                <div>
+                    <h2>Agoda Hotel Booking</h2>
+                    <p class="service-panel-desc">Generate official Agoda Booking Confirmation (Bangkok, Guangzhou, etc.) with auto-generated IDs</p>
+                </div>
+            </div>
+
+            <div class="quick-grid-card">
+                <div class="quick-grid">
+                    <div class="form-group">
+                        <label for="service_hotel_destination">Destination</label>
+                        <select id="service_hotel_destination">
+                            <option value="Bangkok">Bangkok (Grande Centre Point Ratchadamri)</option>
+                            <option value="Guangzhou">Guangzhou (Grand Park Guangzhou)</option>
+                            <option value="Kuala Lumpur">Kuala Lumpur (THE FACE Style Hotel)</option>
+                            <option value="Singapore">Singapore (Village Hotel Bugis)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="service_hotel_client_name">Client / Guest Name</label>
+                        <input type="text" id="service_hotel_client_name" placeholder="e.g. AUNG KHIN NYUNT" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label for="service_hotel_arrival">Arrival Date</label>
+                        <input type="text" id="service_hotel_arrival" placeholder="e.g. 16/10/2026" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="service_hotel_departure">Departure Date</label>
+                        <input type="text" id="service_hotel_departure" placeholder="e.g. 26/10/2026" autocomplete="off">
+                    </div>
+                </div>
+                <div class="quick-info-note">
+                    <i class="fa-solid fa-circle-info" style="color: var(--apple-blue);"></i>
+                    Auto-generates random 12-digit Booking ID & 10-digit Member ID. Full editor with live preview available.
+                </div>
+            </div>
+
+            <div class="service-actions">
+                <button type="button" class="btn-service btn-generate" id="openChinaHotelBtn">
+                    <i class="fa-solid fa-pen-to-square"></i> Open Hotel Editor
+                </button>
+                <button type="button" class="btn-service btn-clear" id="quickChinaHotelBtn">
+                    <i class="fa-solid fa-bolt"></i> Quick Generate
+                </button>
+            </div>
+        </section>
+
+        <!-- FEATURE 2: AIRASIA & VIETJET E-TICKET GENERATOR -->
+        <section class="service-panel" id="airAsiaPanel">
+            <div class="service-panel-header">
+                <span class="service-panel-icon" style="background: rgba(227, 30, 36, 0.1); color: #E31E24;">
+                    <i class="fa-solid fa-plane-departure"></i>
+                </span>
+                <div>
+                    <h2>AirAsia & VietJet E-Ticket Generator</h2>
+                    <p class="service-panel-desc">Auto-detects Trip.com / OTA PDF itinerary and converts into official AirAsia or VietJet Air E-Ticket</p>
+                </div>
+            </div>
+
+            <div class="airasia-upload-zone" id="airAsiaDropZone">
+                <i class="fa-solid fa-file-pdf airasia-upload-icon"></i>
+                <div class="airasia-upload-title">Drop Trip.com / OTA PDF here or click to browse</div>
+                <div class="airasia-upload-sub">Auto-detects AirAsia & VietJet Air, extracts PNR, passengers, schedule & baggage</div>
+                <input type="file" id="airAsiaFileInput" accept=".pdf" style="display: none;">
+            </div>
+
+            <div class="service-actions">
+                <button type="button" class="btn-service btn-generate" id="airAsiaUploadBtn">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Choose PDF File
+                </button>
+                <button type="button" class="btn-service btn-clear" id="airAsiaManualBtn">
+                    <i class="fa-solid fa-pen-to-square"></i> Manual / Blank Form
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- AGODA HOTEL BOOKING MODAL -->
+    <div id="chinaHotelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-hotel" style="color:#e1251b;"></i>
+                    <span>Agoda Hotel Booking</span>
+                    <span style="font-size:12px; background:rgba(225, 37, 27, 0.1); color:#e1251b; padding:2px 8px; border-radius:12px; font-weight:600;">Agoda Confirmation</span>
+                </h2>
+                <button type="button" class="modal-close" id="chinaHotelModalCloseBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="airasia-modal-layout">
+                    <!-- Form Column -->
+                    <div class="airasia-form-scroll">
+                        <div style="background: rgba(225, 37, 27, 0.08); border: 1px solid rgba(225, 37, 27, 0.25); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--apple-label);">
+                            <i class="fa-solid fa-circle-check" style="color:#e1251b;"></i> Official Agoda Booking Confirmation. Live preview updates automatically.
+                        </div>
+
+                        <!-- Destination Preset -->
+                        <div class="airasia-form-row" style="margin-top:10px;">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_destination" style="font-weight:700;">Destination Preset</label>
+                                <select id="agoda_destination" style="font-weight:600;">
+                                    <option value="Bangkok">Bangkok (Grande Centre Point Ratchadamri)</option>
+                                    <option value="Guangzhou">Guangzhou (Grand Park Guangzhou)</option>
+                                    <option value="Kuala Lumpur">Kuala Lumpur (THE FACE Style Hotel)</option>
+                                    <option value="Singapore">Singapore (Village Hotel Bugis)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Booking IDs -->
+                        <div class="airasia-form-section-title">Identifiers</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="agoda_booking_id">Booking ID (12 digits)</label>
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="agoda_booking_id" placeholder="12-digit number" style="font-weight:700;">
+                                    <button type="button" class="btn-service btn-secondary btn-sm" id="agoda_roll_booking_id" title="Generate New Booking ID">
+                                        <i class="fa-solid fa-arrows-rotate"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="agoda_member_id">Member ID (10 digits)</label>
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="agoda_member_id" placeholder="10-digit number" style="font-weight:700;">
+                                    <button type="button" class="btn-service btn-secondary btn-sm" id="agoda_roll_member_id" title="Generate New Member ID">
+                                        <i class="fa-solid fa-arrows-rotate"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_booking_ref_no">Booking Reference No. (Optional)</label>
+                                <input type="text" id="agoda_booking_ref_no" placeholder="Leave empty or enter supplier ref">
+                            </div>
+                        </div>
+
+                        <!-- Guest Information -->
+                        <div class="airasia-form-section-title">Guest Information</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_client_name">Client / Guest Name</label>
+                                <input type="text" id="agoda_client_name" placeholder="e.g. AUNG KHIN NYUNT" style="font-weight:700; text-transform:uppercase;">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="agoda_country">Country of Residence</label>
+                                <input type="text" id="agoda_country" value="Myanmar">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="agoda_num_adults">Number of Adults</label>
+                                <input type="number" id="agoda_num_adults" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="agoda_num_children">Number of Children</label>
+                                <input type="number" id="agoda_num_children" value="0" min="0">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="agoda_num_rooms">Number of Rooms</label>
+                                <input type="number" id="agoda_num_rooms" value="1" min="1">
+                            </div>
+                        </div>
+
+                        <!-- Room & Stay Details -->
+                        <div class="airasia-form-section-title">Room & Stay Details</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="agoda_num_extra_beds">Number of Extra Beds</label>
+                                <input type="number" id="agoda_num_extra_beds" value="0" min="0">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="agoda_room_type">Room Type</label>
+                                <input type="text" id="agoda_room_type" value="Superior Deluxe">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_promotion">Promotion</label>
+                                <input type="text" id="agoda_promotion" value="Long Stay Deal. Price includes 10% discount!">
+                            </div>
+                        </div>
+
+                        <!-- Stay Dates -->
+                        <div class="airasia-form-section-title">Stay Dates</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="agoda_arrival_date">Arrival Date</label>
+                                <input type="text" id="agoda_arrival_date" placeholder="e.g. 16/10/2026 or October 16, 2026">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="agoda_departure_date">Departure Date</label>
+                                <input type="text" id="agoda_departure_date" placeholder="e.g. 26/10/2026 or October 26, 2026">
+                            </div>
+                        </div>
+
+                        <!-- Property / Hotel Details -->
+                        <div class="airasia-form-section-title">Hotel / Property Information</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_property_name">Property Name</label>
+                                <input type="text" id="agoda_property_name" value="Grande Centre Point Ratchadamri">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_property_address">Address</label>
+                                <textarea id="agoda_property_address" rows="3">153/2 Mahatlek Luang 1, Ratchadamri Rd,
+Lumpini, Pathumwan,
+Bangkok (and vicinity), Thailand</textarea>
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_property_contact">Property Contact Number</label>
+                                <input type="text" id="agoda_property_contact" value="+66 209 19000">
+                            </div>
+                        </div>
+
+                        <!-- Policy & Remarks -->
+                        <div class="airasia-form-section-title">Policy & Remarks</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_cancellation_date">Cancellation Free Until Date</label>
+                                <input type="text" id="agoda_cancellation_date" placeholder="Auto: 3 days before arrival">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="agoda_remarks_special">Special Requests</label>
+                                <input type="text" id="agoda_remarks_special" value="NonSmoke,LargeBed">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Live Preview Column -->
+                    <div class="airasia-preview-scroll">
+                        <div id="agodaPreviewContainer" style="width:100%; display:flex; justify-content:center;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-service btn-secondary" id="chinaHotelCancelBtn">Cancel</button>
+                <button type="button" class="btn-service btn-secondary" id="chinaHotelDownloadImgBtn">
+                    <i class="fa-solid fa-image"></i> Save Photo
+                </button>
+                <button type="button" class="btn-service btn-secondary" id="chinaHotelShareBtn" style="color:var(--apple-blue);">
+                    <i class="fa-solid fa-share-nodes"></i> Share
+                </button>
+                <button type="button" class="btn-service btn-primary" id="chinaHotelDownloadPdfBtn">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AIRASIA & VIETJET E-TICKET GENERATOR MODAL -->
+    <div id="airAsiaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fa-solid fa-plane-departure" style="color:#E31E24;"></i>
+                    <span id="airAsiaModalTitle">AirAsia & VietJet E-Ticket Generator</span>
+                </h2>
+                <button type="button" class="modal-close" id="airAsiaModalCloseBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="airasia-modal-layout">
+                    <!-- Form Column -->
+                    <div class="airasia-form-scroll">
+                        <div style="background: rgba(227, 30, 36, 0.08); border: 1px solid rgba(227, 30, 36, 0.25); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--apple-label);">
+                            <i class="fa-solid fa-circle-check" style="color:#E31E24;"></i> Review or modify details below. Live preview updates automatically.
+                        </div>
+
+                        <!-- Template Selection -->
+                        <div class="airasia-form-row" style="margin-top:10px;">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="aa_airline_select" style="font-weight:700;">Airline Template</label>
+                                <select id="aa_airline_select" style="font-weight:600;">
+                                    <option value="AirAsia">AirAsia</option>
+                                    <option value="VietJet Air">VietJet Air</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Booking Details -->
+                        <div class="airasia-form-section-title">Booking Information</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_booking_no">Booking Number</label>
+                                <input type="text" id="aa_booking_no" placeholder="e.g. 1658114947014387">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_pnr">Airline PNR</label>
+                                <input type="text" id="aa_pnr" placeholder="e.g. N728NB" style="text-transform:uppercase;">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_eticket_no">E-Ticket No.</label>
+                                <input type="text" id="aa_eticket_no" placeholder="To be advised at check-in">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_class">Class</label>
+                                <input type="text" id="aa_class" placeholder="Economy">
+                            </div>
+                        </div>
+
+                        <!-- Passenger Information -->
+                        <div class="airasia-form-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Passenger Information</span>
+                            <button type="button" class="btn-service btn-secondary btn-sm" id="aa_add_pax_btn">
+                                <i class="fa-solid fa-plus"></i> Add Passenger
+                            </button>
+                        </div>
+                        <div id="aa_passengers_list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+
+                        <!-- Flight Details -->
+                        <div class="airasia-form-section-title">Flight Details</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                                <label for="aa_route">Route</label>
+                                <input type="text" id="aa_route" placeholder="e.g. Phu Quoc (PQC) - Ho Chi Minh City (SGN)">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_flight_no">Flight Number</label>
+                                <input type="text" id="aa_flight_no" placeholder="e.g. VJ334 / AK6032" style="text-transform:uppercase;">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_airline_name">Airline / Carrier</label>
+                                <input type="text" id="aa_airline_name" placeholder="VietJet Air / AirAsia Berhad">
+                            </div>
+                        </div>
+
+                        <!-- Departure -->
+                        <div class="airasia-form-section-title">Departure</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_dep_time">Departure Time</label>
+                                <input type="text" id="aa_dep_time" placeholder="e.g. 18:30">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_dep_date">Departure Date</label>
+                                <input type="text" id="aa_dep_date" placeholder="e.g. Thursday, 3 September 2026">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_dep_airport">Departure Airport (with code)</label>
+                                <input type="text" id="aa_dep_airport" placeholder="e.g. Kuala Lumpur International Airport (KUL)">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_dep_terminal">Terminal (optional)</label>
+                                <input type="text" id="aa_dep_terminal" placeholder="Terminal 2">
+                            </div>
+                        </div>
+
+                        <!-- Arrival -->
+                        <div class="airasia-form-section-title">Arrival</div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_arr_time">Arrival Time</label>
+                                <input type="text" id="aa_arr_time" placeholder="e.g. 19:25">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_arr_date">Arrival Date</label>
+                                <input type="text" id="aa_arr_date" placeholder="e.g. Thursday, 3 September 2026">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_arr_airport">Arrival Airport (with code)</label>
+                                <input type="text" id="aa_arr_airport" placeholder="e.g. Johor Bahru Senai International Airport (JHB)">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_arr_terminal">Terminal (optional)</label>
+                                <input type="text" id="aa_arr_terminal" placeholder="">
+                            </div>
+                        </div>
+
+                        <!-- Baggage -->
+                        <div class="airasia-form-section-title">Baggage Allowance</div>
+                        <div class="airasia-form-group">
+                            <label for="aa_bag_checked">Checked Baggage</label>
+                            <textarea id="aa_bag_checked" rows="2" placeholder="30 kg per person&#10;Each piece max 119 x 119 x 81 cm (total 319 cm)"></textarea>
+                        </div>
+                        <div class="airasia-form-group">
+                            <label for="aa_bag_carry">Carry-on Baggage</label>
+                            <textarea id="aa_bag_carry" rows="2" placeholder="1 piece per person&#10;Max 56 x 36 x 23 cm per piece"></textarea>
+                        </div>
+                        <div class="airasia-form-group">
+                            <label for="aa_bag_personal">Personal Item</label>
+                            <textarea id="aa_bag_personal" rows="2" placeholder="1 piece per person&#10;Max 40 x 30 x 10 cm per piece, fits under the seat in front of you"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Live Preview Column -->
+                    <div class="airasia-preview-scroll">
+                        <div id="airAsiaPreviewContainer" style="width:100%; max-width:800px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-service btn-secondary" id="airAsiaCancelBtn">Cancel</button>
+                <button type="button" class="btn-service btn-secondary" id="airAsiaDownloadImgBtn">
+                    <i class="fa-solid fa-image"></i> Save Photo
+                </button>
+                <button type="button" class="btn-service btn-secondary" id="airAsiaShareBtn" style="color:var(--apple-blue);">
+                    <i class="fa-solid fa-share-nodes"></i> Share
+                </button>
+                <button type="button" class="btn-service btn-primary" id="airAsiaDownloadPdfBtn">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- App Logic -->
+    <script src="app.js" type="module"></script>
+</body>
+</html>

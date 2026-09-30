@@ -1,0 +1,572 @@
+:root {
+    color-scheme: light;
+    --apple-canvas: #f5f5f7;
+    --apple-card: #ffffff;
+    --apple-bg-secondary: #f9f9fb;
+    --apple-input-bg: #ffffff;
+    --apple-label: #1d1d1f;
+    --apple-secondary-label: #6e6e73;
+    --apple-tertiary-label: #8e8e93;
+    --apple-separator: rgba(60, 60, 67, 0.15);
+    --apple-blue: #0071e3;
+    --apple-blue-hover: #0077ed;
+    --apple-red: #e1251b;
+    --apple-red-hover: #cc1f16;
+    --apple-green: #34c759;
+    --apple-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --apple-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+    --apple-radius: 14px;
+    --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--apple-canvas);
+    background: radial-gradient(circle at 90% -10%, rgba(225, 37, 27, 0.05), transparent 30rem),
+                radial-gradient(circle at 10% 100%, rgba(0, 113, 227, 0.05), transparent 30rem),
+                var(--apple-canvas);
+    color: var(--apple-label);
+    font-family: var(--font-main);
+    line-height: 1.5;
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+}
+
+/* App Header */
+.app-header {
+    max-width: 960px;
+    margin: 0 auto 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e1251b, #b91c1c);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 12px rgba(225, 37, 27, 0.25);
+}
+
+.brand-text h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--apple-label);
+    letter-spacing: -0.02em;
+}
+
+.brand-text p {
+    font-size: 0.85rem;
+    color: var(--apple-secondary-label);
+}
+
+.header-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(0, 113, 227, 0.08);
+    color: var(--apple-blue);
+    border: 1px solid rgba(0, 113, 227, 0.18);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Container */
+.main-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Feature Panels */
+.service-panel {
+    background: var(--apple-card);
+    border: 1px solid var(--apple-separator);
+    border-radius: var(--apple-radius);
+    padding: 24px;
+    box-shadow: var(--apple-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-panel:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.07);
+}
+
+.service-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.service-panel-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.service-panel-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--apple-label);
+    letter-spacing: -0.015em;
+}
+
+.service-panel-desc {
+    font-size: 0.84rem;
+    color: var(--apple-secondary-label);
+    margin-top: 1px;
+}
+
+/* Form Quick Grid */
+.quick-grid-card {
+    background: var(--apple-bg-secondary);
+    border: 1px solid var(--apple-separator);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+}
+
+.quick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.quick-info-note {
+    font-size: 0.8rem;
+    color: var(--apple-secondary-label);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Drop Zone */
+.airasia-upload-zone {
+    border: 2px dashed rgba(227, 30, 36, 0.35);
+    border-radius: 14px;
+    padding: 32px 20px;
+    text-align: center;
+    background: rgba(227, 30, 36, 0.02);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 8px 0 18px;
+}
+
+.airasia-upload-zone:hover,
+.airasia-upload-zone.dragover {
+    border-color: var(--apple-red);
+    background: rgba(227, 30, 36, 0.06);
+    transform: translateY(-1px);
+}
+
+.airasia-upload-icon {
+    font-size: 2.6rem;
+    color: var(--apple-red);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.airasia-upload-title {
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--apple-label);
+    margin-bottom: 4px;
+}
+
+.airasia-upload-sub {
+    font-size: 0.82rem;
+    color: var(--apple-secondary-label);
+}
+
+/* Action Buttons */
+.service-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-service {
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.btn-service:active {
+    transform: scale(0.98);
+}
+
+.btn-generate {
+    background: var(--apple-red);
+    border-color: var(--apple-red);
+    color: #ffffff;
+}
+
+.btn-generate:hover {
+    background: var(--apple-red-hover);
+    border-color: var(--apple-red-hover);
+    box-shadow: 0 4px 12px rgba(225, 37, 27, 0.25);
+}
+
+.btn-clear, .btn-secondary {
+    background: #ffffff;
+    color: var(--apple-label);
+    border-color: var(--apple-separator);
+}
+
+.btn-clear:hover, .btn-secondary:hover {
+    background: #f2f2f7;
+    border-color: rgba(60, 60, 67, 0.25);
+}
+
+.btn-primary {
+    background: var(--apple-red);
+    border-color: var(--apple-red);
+    color: #ffffff;
+    padding: 10px 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    background: var(--apple-red-hover);
+    border-color: var(--apple-red-hover);
+    box-shadow: 0 4px 12px rgba(225, 37, 27, 0.25);
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+}
+
+/* Form Controls */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--apple-secondary-label);
+    margin-bottom: 5px;
+    display: block;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--apple-separator);
+    background: var(--apple-input-bg);
+    color: var(--apple-label);
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+/* Modals */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    padding: 16px;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--apple-shadow-lg);
+    width: 95vw;
+    max-width: 1240px;
+    max-height: 94vh;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 22px;
+    transform: scale(0.97) translateY(10px);
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.modal.show .modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--apple-separator);
+    margin-bottom: 14px;
+}
+
+.modal-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: var(--apple-secondary-label);
+    line-height: 1;
+    border-radius: 6px;
+    padding: 2px 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.modal-close:hover {
+    color: var(--apple-label);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-body {
+    padding: 0;
+    overflow: hidden;
+    flex: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--apple-separator);
+    padding-top: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+/* Modal Internal Layout */
+.airasia-modal-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+    height: 100%;
+    max-height: calc(94vh - 130px);
+}
+
+.airasia-form-scroll {
+    max-height: calc(94vh - 130px);
+    overflow-y: auto;
+    padding-right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.airasia-preview-scroll {
+    max-height: calc(94vh - 130px);
+    overflow-y: auto;
+    background: #525659;
+    padding: 24px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.airasia-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.airasia-form-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--apple-secondary-label);
+}
+
+.airasia-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.airasia-form-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--apple-red);
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    border-bottom: 1px solid rgba(225, 37, 27, 0.2);
+    padding-bottom: 4px;
+}
+
+/* Document wrappers inside preview */
+.agoda-booking-wrapper {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border-radius: 4px;
+    background: #ffffff;
+    max-width: 710px;
+    width: 100%;
+}
+
+.airasia-ticket-wrapper {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border-radius: 8px;
+    background: #ffffff;
+    max-width: 790px;
+    width: 100%;
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    z-index: 9999;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+    background: #1d1d1f;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+    background: #1e3a1e;
+    color: #a7f3d0;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+}
+
+.toast.error {
+    background: #3f1a1d;
+    color: #fecdd3;
+    border: 1px solid rgba(225, 37, 27, 0.3);
+}
+
+.toast.info {
+    background: #1c2738;
+    color: #bfdbfe;
+    border: 1px solid rgba(0, 113, 227, 0.3);
+}
+
+.toast.warning {
+    background: #3c2a12;
+    color: #fde68a;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .airasia-modal-layout {
+        grid-template-columns: 1fr;
+        max-height: none;
+    }
+    
+    .airasia-form-scroll,
+    .airasia-preview-scroll {
+        max-height: none;
+    }
+    
+    .airasia-preview-scroll {
+        padding: 12px;
+    }
+    
+    .modal-content {
+        max-height: 96vh;
+        overflow-y: auto;
+    }
+    
+    .modal-body {
+        overflow-y: auto;
+    }
+}
