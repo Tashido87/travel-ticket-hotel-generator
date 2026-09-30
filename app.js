@@ -153,7 +153,7 @@ function initAgodaHotelFeature() {
             bookingId: document.getElementById('agoda_booking_id')?.value || generateRandomBookingId(),
             memberId: document.getElementById('agoda_member_id')?.value || generateRandomMemberId(),
             bookingRefNo: document.getElementById('agoda_booking_ref_no')?.value || '',
-            clientName: (document.getElementById('agoda_client_name')?.value || 'AUNG KHIN NYUNT').trim().toUpperCase(),
+            clientName: (document.getElementById('agoda_client_name')?.value || '').trim().toUpperCase(),
             countryOfResidence: document.getElementById('agoda_country')?.value || 'Myanmar',
             numAdults: parseInt(document.getElementById('agoda_num_adults')?.value || '1', 10),
             numChildren: parseInt(document.getElementById('agoda_num_children')?.value || '0', 10),
@@ -161,8 +161,8 @@ function initAgodaHotelFeature() {
             numExtraBeds: parseInt(document.getElementById('agoda_num_extra_beds')?.value || '0', 10),
             roomType: document.getElementById('agoda_room_type')?.value || 'Superior Deluxe',
             promotion: document.getElementById('agoda_promotion')?.value || 'Long Stay Deal. Price includes 10% discount!',
-            arrivalDate: document.getElementById('agoda_arrival_date')?.value || 'October 16, 2026',
-            departureDate: document.getElementById('agoda_departure_date')?.value || 'October 26, 2026',
+            arrivalDate: document.getElementById('agoda_arrival_date')?.value || '',
+            departureDate: document.getElementById('agoda_departure_date')?.value || '',
             propertyName: document.getElementById('agoda_property_name')?.value || preset.propertyName,
             propertyAddress: document.getElementById('agoda_property_address')?.value || preset.propertyAddress,
             propertyContact: document.getElementById('agoda_property_contact')?.value || preset.propertyContact,
@@ -192,7 +192,7 @@ function initAgodaHotelFeature() {
             document.getElementById('agoda_booking_ref_no').value = data.bookingRefNo || '';
         }
         if (document.getElementById('agoda_client_name')) {
-            document.getElementById('agoda_client_name').value = data.clientName || 'AUNG KHIN NYUNT';
+            document.getElementById('agoda_client_name').value = data.clientName || '';
         }
         if (document.getElementById('agoda_country')) {
             document.getElementById('agoda_country').value = data.countryOfResidence || 'Myanmar';
@@ -216,10 +216,10 @@ function initAgodaHotelFeature() {
             document.getElementById('agoda_promotion').value = data.promotion || 'Long Stay Deal. Price includes 10% discount!';
         }
         if (document.getElementById('agoda_arrival_date')) {
-            document.getElementById('agoda_arrival_date').value = data.arrivalDate || 'October 16, 2026';
+            document.getElementById('agoda_arrival_date').value = data.arrivalDate || '';
         }
         if (document.getElementById('agoda_departure_date')) {
-            document.getElementById('agoda_departure_date').value = data.departureDate || 'October 26, 2026';
+            document.getElementById('agoda_departure_date').value = data.departureDate || '';
         }
         if (document.getElementById('agoda_property_name')) {
             document.getElementById('agoda_property_name').value = data.propertyName || preset.propertyName;
@@ -232,7 +232,7 @@ function initAgodaHotelFeature() {
         }
         if (document.getElementById('agoda_cancellation_date')) {
             const cancelInput = document.getElementById('agoda_cancellation_date');
-            cancelInput.value = data.cancellationDate || calculateDefaultCancellationDate(data.arrivalDate || 'October 16, 2026');
+            cancelInput.value = data.cancellationDate || (data.arrivalDate ? calculateDefaultCancellationDate(data.arrivalDate) : '');
             cancelInput.dataset.autoFilled = data.cancellationDate ? 'false' : 'true';
         }
         if (document.getElementById('agoda_remarks_special')) {
@@ -314,9 +314,9 @@ function initAgodaHotelFeature() {
             destination: quickDest,
             bookingId: generateRandomBookingId(),
             memberId: generateRandomMemberId(),
-            clientName: quickClient || 'AUNG KHIN NYUNT',
-            arrivalDate: quickArrival ? formatAgodaDate(quickArrival) : 'October 16, 2026',
-            departureDate: quickDeparture ? formatAgodaDate(quickDeparture) : 'October 26, 2026',
+            clientName: quickClient || '',
+            arrivalDate: quickArrival ? formatAgodaDate(quickArrival) : '',
+            departureDate: quickDeparture ? formatAgodaDate(quickDeparture) : '',
             propertyName: preset.propertyName,
             propertyAddress: preset.propertyAddress,
             propertyContact: preset.propertyContact,
@@ -333,9 +333,25 @@ function initAgodaHotelFeature() {
     quickBtn?.addEventListener('click', async () => {
         const quickDest = document.getElementById('service_hotel_destination')?.value || 'Bangkok';
         const preset = DESTINATION_PRESETS[quickDest] || DESTINATION_PRESETS.Bangkok;
-        const quickClient = (document.getElementById('service_hotel_client_name')?.value || '').trim() || 'AUNG KHIN NYUNT';
+        const quickClient = (document.getElementById('service_hotel_client_name')?.value || '').trim();
         const quickArrival = (document.getElementById('service_hotel_arrival')?.value || '').trim();
         const quickDeparture = (document.getElementById('service_hotel_departure')?.value || '').trim();
+
+        if (!quickClient) {
+            showToast('Please enter Client / Guest Name before downloading PDF.', 'warning');
+            document.getElementById('service_hotel_client_name')?.focus();
+            return;
+        }
+        if (!quickArrival) {
+            showToast('Please enter Arrival Date before downloading PDF.', 'warning');
+            document.getElementById('service_hotel_arrival')?.focus();
+            return;
+        }
+        if (!quickDeparture) {
+            showToast('Please enter Departure Date before downloading PDF.', 'warning');
+            document.getElementById('service_hotel_departure')?.focus();
+            return;
+        }
 
         const data = {
             destination: quickDest,
@@ -345,8 +361,8 @@ function initAgodaHotelFeature() {
             propertyName: preset.propertyName,
             propertyAddress: preset.propertyAddress,
             propertyContact: preset.propertyContact,
-            arrivalDate: quickArrival ? formatAgodaDate(quickArrival) : 'October 16, 2026',
-            departureDate: quickDeparture ? formatAgodaDate(quickDeparture) : 'October 26, 2026',
+            arrivalDate: formatAgodaDate(quickArrival),
+            departureDate: formatAgodaDate(quickDeparture),
             numRooms: 1,
             numExtraBeds: 0,
             numAdults: 1,
@@ -372,6 +388,26 @@ function initAgodaHotelFeature() {
     });
 
     downloadPdfBtn?.addEventListener('click', async () => {
+        const clientName = (document.getElementById('agoda_client_name')?.value || '').trim();
+        const arrivalDate = (document.getElementById('agoda_arrival_date')?.value || '').trim();
+        const departureDate = (document.getElementById('agoda_departure_date')?.value || '').trim();
+
+        if (!clientName) {
+            showToast('Please enter Client / Guest Name before downloading PDF.', 'warning');
+            document.getElementById('agoda_client_name')?.focus();
+            return;
+        }
+        if (!arrivalDate) {
+            showToast('Please enter Arrival Date before downloading PDF.', 'warning');
+            document.getElementById('agoda_arrival_date')?.focus();
+            return;
+        }
+        if (!departureDate) {
+            showToast('Please enter Departure Date before downloading PDF.', 'warning');
+            document.getElementById('agoda_departure_date')?.focus();
+            return;
+        }
+
         showToast('Generating official Agoda PDF...', 'info');
         try {
             downloadPdfBtn.disabled = true;
