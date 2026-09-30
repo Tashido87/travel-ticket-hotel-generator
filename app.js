@@ -439,6 +439,15 @@ function initAirAsiaFeature() {
 
     if (!dropZone || !modal) return;
 
+    function escapeAaHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     function renderPassengerRows(passengersList = []) {
         const container = document.getElementById('aa_passengers_list');
         if (!container) return;
@@ -455,7 +464,7 @@ function initAirAsiaFeature() {
             row.innerHTML = `
                 <div style="flex:1;">
                     <label style="font-size:11px; margin-bottom:2px; display:block; color:var(--apple-secondary-label); font-weight:600;">Passenger Name (${idx + 1})</label>
-                    <input type="text" class="aa_pax_name_input" value="${p.name || ''}" placeholder="PASSENGER FULL NAME" style="width:100%; font-weight:700; text-transform:uppercase;">
+                    <input type="text" class="aa_pax_name_input" value="${escapeAaHtml(p.name || '')}" placeholder="PASSENGER FULL NAME" style="width:100%; font-weight:700; text-transform:uppercase;">
                 </div>
                 <div style="width:100px;">
                     <label style="font-size:11px; margin-bottom:2px; display:block; color:var(--apple-secondary-label); font-weight:600;">Type</label>
@@ -505,6 +514,146 @@ function initAirAsiaFeature() {
         return list.length > 0 ? list : [{ name: '', type: 'Adult' }];
     }
 
+    function renderFlightRows(flightsList) {
+        const container = document.getElementById('aa_flights_list');
+        if (!container) return;
+        container.innerHTML = '';
+
+        flightsList.forEach((f, idx) => {
+            const card = document.createElement('div');
+            card.className = 'aa_flight_card';
+            card.style.cssText = 'background:var(--apple-bg-secondary); border:1px solid var(--apple-separator); border-radius:10px; padding:12px; position:relative;';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed var(--apple-separator);">
+                    <strong style="color:var(--apple-label); font-size:12px;"><i class="fa-solid fa-plane" style="color:var(--apple-blue); margin-right:4px;"></i> Sector ${idx + 1}</strong>
+                    ${flightsList.length > 1 ? `<button type="button" class="btn-service btn-secondary btn-sm aa_remove_flight_btn" style="padding:2px 8px; font-size:11px; color:#dc2626;"><i class="fa-solid fa-trash-can"></i> Remove</button>` : ''}
+                </div>
+                <div class="airasia-form-row" style="margin-bottom:8px;">
+                    <div class="airasia-form-group" style="grid-column: 1 / -1;">
+                        <label style="font-size:11px;">Route</label>
+                        <input type="text" class="aa_flight_route" value="${escapeAaHtml(f.route || '')}" placeholder="e.g. Yangon (RGN) - Bangkok (DMK)">
+                    </div>
+                </div>
+                <div class="airasia-form-row" style="margin-bottom:8px;">
+                    <div class="airasia-form-group">
+                        <label style="font-size:11px;">Flight Number</label>
+                        <input type="text" class="aa_flight_no" value="${escapeAaHtml(f.flightNo || '')}" placeholder="e.g. FD252 / VJ334" style="text-transform:uppercase; font-weight:700;">
+                    </div>
+                    <div class="airasia-form-group">
+                        <label style="font-size:11px;">Airline / Carrier</label>
+                        <input type="text" class="aa_flight_airline" value="${escapeAaHtml(f.airlineName || '')}" placeholder="e.g. Thai AirAsia">
+                    </div>
+                </div>
+                
+                <div style="font-size:11px; font-weight:700; color:var(--apple-blue); margin:6px 0 4px 0;">Departure</div>
+                <div class="airasia-form-row" style="margin-bottom:6px;">
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Departure Time</label>
+                        <input type="text" class="aa_flight_dep_time" value="${escapeAaHtml(f.depTime || '')}" placeholder="e.g. 08:30">
+                    </div>
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Departure Date</label>
+                        <input type="text" class="aa_flight_dep_date" value="${escapeAaHtml(f.depDateFormatted || '')}" placeholder="e.g. Sunday, 4 October 2026">
+                    </div>
+                </div>
+                <div class="airasia-form-row" style="margin-bottom:8px;">
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Departure Airport (with code)</label>
+                        <input type="text" class="aa_flight_dep_airport" value="${escapeAaHtml(f.depAirport || '')}" placeholder="e.g. Yangon International Airport (RGN)">
+                    </div>
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Terminal</label>
+                        <input type="text" class="aa_flight_dep_terminal" value="${escapeAaHtml(f.depTerminal || '')}" placeholder="Terminal 1">
+                    </div>
+                </div>
+
+                <div style="font-size:11px; font-weight:700; color:var(--apple-blue); margin:6px 0 4px 0;">Arrival</div>
+                <div class="airasia-form-row" style="margin-bottom:6px;">
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Arrival Time</label>
+                        <input type="text" class="aa_flight_arr_time" value="${escapeAaHtml(f.arrTime || '')}" placeholder="e.g. 10:20">
+                    </div>
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Arrival Date</label>
+                        <input type="text" class="aa_flight_arr_date" value="${escapeAaHtml(f.arrDateFormatted || '')}" placeholder="e.g. Sunday, 4 October 2026">
+                    </div>
+                </div>
+                <div class="airasia-form-row">
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Arrival Airport (with code)</label>
+                        <input type="text" class="aa_flight_arr_airport" value="${escapeAaHtml(f.arrAirport || '')}" placeholder="e.g. Don Mueang International Airport (DMK)">
+                    </div>
+                    <div class="airasia-form-group">
+                        <label style="font-size:10.5px;">Terminal</label>
+                        <input type="text" class="aa_flight_arr_terminal" value="${escapeAaHtml(f.arrTerminal || '')}" placeholder="Terminal 1">
+                    </div>
+                </div>
+            `;
+
+            card.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', updatePreview);
+                inp.addEventListener('change', updatePreview);
+            });
+
+            card.querySelector('.aa_remove_flight_btn')?.addEventListener('click', () => {
+                const currentFlights = collectFlights();
+                currentFlights.splice(idx, 1);
+                renderFlightRows(currentFlights.length > 0 ? currentFlights : [{
+                    flightNo: '', airlineName: 'AirAsia Berhad', depTime: '', depDateFormatted: '', depAirport: '', depTerminal: '', arrTime: '', arrDateFormatted: '', arrAirport: '', arrTerminal: '', route: ''
+                }]);
+                updatePreview();
+            });
+
+            container.appendChild(card);
+        });
+    }
+
+    function collectFlights() {
+        const container = document.getElementById('aa_flights_list');
+        if (!container) return [];
+        const cards = container.querySelectorAll('.aa_flight_card');
+        const list = [];
+        cards.forEach(card => {
+            list.push({
+                route: (card.querySelector('.aa_flight_route')?.value || '').trim(),
+                flightNo: (card.querySelector('.aa_flight_no')?.value || '').trim().toUpperCase(),
+                airlineName: (card.querySelector('.aa_flight_airline')?.value || '').trim(),
+                depTime: (card.querySelector('.aa_flight_dep_time')?.value || '').trim(),
+                depDateFormatted: (card.querySelector('.aa_flight_dep_date')?.value || '').trim(),
+                depAirport: (card.querySelector('.aa_flight_dep_airport')?.value || '').trim(),
+                depTerminal: (card.querySelector('.aa_flight_dep_terminal')?.value || '').trim(),
+                arrTime: (card.querySelector('.aa_flight_arr_time')?.value || '').trim(),
+                arrDateFormatted: (card.querySelector('.aa_flight_arr_date')?.value || '').trim(),
+                arrAirport: (card.querySelector('.aa_flight_arr_airport')?.value || '').trim(),
+                arrTerminal: (card.querySelector('.aa_flight_arr_terminal')?.value || '').trim()
+            });
+        });
+        return list;
+    }
+
+    const addFlightBtn = document.getElementById('aa_add_flight_btn');
+    addFlightBtn?.addEventListener('click', () => {
+        const currentFlights = collectFlights();
+        currentFlights.push({
+            flightNo: '',
+            airlineName: airlineSelect?.value === 'VietJet Air' ? 'VietJet Air' : 'Thai AirAsia',
+            depTime: '',
+            depDateFormatted: '',
+            depAirport: '',
+            depTerminal: '',
+            arrTime: '',
+            arrDateFormatted: '',
+            arrAirport: '',
+            arrTerminal: '',
+            route: ''
+        });
+        renderFlightRows(currentFlights);
+        const container = document.getElementById('aa_flights_list');
+        const lastInput = container?.querySelector('.aa_flight_card:last-child .aa_flight_route');
+        if (lastInput) lastInput.focus();
+        updatePreview();
+    });
+
     addPaxBtn?.addEventListener('click', () => {
         const currentPassengers = collectPassengers();
         currentPassengers.push({ name: '', type: 'Adult' });
@@ -515,21 +664,14 @@ function initAirAsiaFeature() {
         updatePreview();
     });
 
-    airlineSelect?.addEventListener('change', (e) => {
-        const chosen = e.target.value;
-        const airlineInput = document.getElementById('aa_airline_name');
-        if (airlineInput) {
-            if (chosen === 'VietJet Air' && (!airlineInput.value || airlineInput.value === 'AirAsia Berhad')) {
-                airlineInput.value = 'VietJet Air';
-            } else if (chosen === 'AirAsia' && (!airlineInput.value || airlineInput.value === 'VietJet Air')) {
-                airlineInput.value = 'AirAsia Berhad';
-            }
-        }
+    airlineSelect?.addEventListener('change', () => {
         updatePreview();
     });
 
     function collectFormData() {
         const passengers = collectPassengers();
+        const flights = collectFlights();
+        const primaryFlight = flights[0] || {};
         return {
             airline: airlineSelect?.value || 'AirAsia',
             bookingNo: document.getElementById('aa_booking_no')?.value || '',
@@ -539,17 +681,18 @@ function initAirAsiaFeature() {
             passengers: passengers,
             passengerName: passengers[0]?.name || '',
             passengerType: passengers[0]?.type || 'Adult',
-            flightNo: (document.getElementById('aa_flight_no')?.value || '').trim().toUpperCase(),
-            airlineName: document.getElementById('aa_airline_name')?.value || 'AirAsia Berhad',
-            depTime: document.getElementById('aa_dep_time')?.value || '',
-            depDateFormatted: document.getElementById('aa_dep_date')?.value || '',
-            depAirport: document.getElementById('aa_dep_airport')?.value || '',
-            depTerminal: document.getElementById('aa_dep_terminal')?.value || '',
-            arrTime: document.getElementById('aa_arr_time')?.value || '',
-            arrDateFormatted: document.getElementById('aa_arr_date')?.value || '',
-            arrAirport: document.getElementById('aa_arr_airport')?.value || '',
-            arrTerminal: document.getElementById('aa_arr_terminal')?.value || '',
-            route: document.getElementById('aa_route')?.value || '',
+            flights: flights,
+            flightNo: primaryFlight.flightNo || '',
+            airlineName: primaryFlight.airlineName || 'AirAsia Berhad',
+            depTime: primaryFlight.depTime || '',
+            depDateFormatted: primaryFlight.depDateFormatted || '',
+            depAirport: primaryFlight.depAirport || '',
+            depTerminal: primaryFlight.depTerminal || '',
+            arrTime: primaryFlight.arrTime || '',
+            arrDateFormatted: primaryFlight.arrDateFormatted || '',
+            arrAirport: primaryFlight.arrAirport || '',
+            arrTerminal: primaryFlight.arrTerminal || '',
+            route: primaryFlight.route || '',
             checkedBaggage: document.getElementById('aa_bag_checked')?.value || '',
             carryOnBaggage: document.getElementById('aa_bag_carry')?.value || '',
             personalItem: document.getElementById('aa_bag_personal')?.value || ''
@@ -576,18 +719,24 @@ function initAirAsiaFeature() {
             : [{ name: data.passengerName || '', type: data.passengerType || 'Adult' }];
         renderPassengerRows(paxList);
 
-        if (document.getElementById('aa_flight_no')) document.getElementById('aa_flight_no').value = data.flightNo || '';
-        if (document.getElementById('aa_airline_name')) document.getElementById('aa_airline_name').value = data.airlineName || (data.airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad');
-        if (document.getElementById('aa_dep_time')) document.getElementById('aa_dep_time').value = data.depTime || '';
-        if (document.getElementById('aa_dep_date')) document.getElementById('aa_dep_date').value = data.depDateFormatted || '';
-        if (document.getElementById('aa_dep_airport')) document.getElementById('aa_dep_airport').value = data.depAirport || '';
-        if (document.getElementById('aa_dep_terminal')) document.getElementById('aa_dep_terminal').value = data.depTerminal || '';
-        if (document.getElementById('aa_arr_time')) document.getElementById('aa_arr_time').value = data.arrTime || '';
-        if (document.getElementById('aa_arr_date')) document.getElementById('aa_arr_date').value = data.arrDateFormatted || '';
-        if (document.getElementById('aa_arr_airport')) document.getElementById('aa_arr_airport').value = data.arrAirport || '';
-        if (document.getElementById('aa_arr_terminal')) document.getElementById('aa_arr_terminal').value = data.arrTerminal || '';
-        if (document.getElementById('aa_route')) document.getElementById('aa_route').value = data.route || '';
-        if (document.getElementById('aa_bag_checked')) document.getElementById('aa_bag_checked').value = data.checkedBaggage || '20 kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm';
+        const flList = (data.flights && data.flights.length > 0)
+            ? data.flights
+            : [{
+                flightNo: data.flightNo || '',
+                airlineName: data.airlineName || (data.airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad'),
+                depTime: data.depTime || '',
+                depDateFormatted: data.depDateFormatted || '',
+                depAirport: data.depAirport || '',
+                depTerminal: data.depTerminal || '',
+                arrTime: data.arrTime || '',
+                arrDateFormatted: data.arrDateFormatted || '',
+                arrAirport: data.arrAirport || '',
+                arrTerminal: data.arrTerminal || '',
+                route: data.route || ''
+            }];
+        renderFlightRows(flList);
+
+        if (document.getElementById('aa_bag_checked')) document.getElementById('aa_bag_checked').value = data.checkedBaggage || '30 kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm';
         if (document.getElementById('aa_bag_carry')) document.getElementById('aa_bag_carry').value = data.carryOnBaggage || '1 piece per person\nMax 56 x 36 x 23 cm per piece';
         if (document.getElementById('aa_bag_personal')) document.getElementById('aa_bag_personal').value = data.personalItem || '1 piece per person\nMax 40 x 30 x 10 cm per piece, fits under the seat in front of you';
 
@@ -610,7 +759,7 @@ function initAirAsiaFeature() {
         try {
             const rawText = await extractTextFromPdf(file);
             if (!rawText || rawText.trim().length < 30) {
-                showToast('Could not extract text from PDF (it might be an image). Opening form for manual entry.', 'warning');
+                showToast('Could not extract text from PDF (it might be a scanned image). Opening form for manual review.', 'warning');
             }
             const parsedData = parseItineraryText(rawText);
             populateForm(parsedData);
@@ -654,17 +803,20 @@ function initAirAsiaFeature() {
             eTicketNo: 'To be advised at check-in',
             flightClass: 'Economy',
             passengers: [{ name: '', type: 'Adult' }],
-            flightNo: 'AK',
-            airlineName: 'AirAsia Berhad',
-            depTime: '12:00',
-            depDateFormatted: '',
-            depAirport: 'Kuala Lumpur International Airport (KUL)',
-            depTerminal: 'Terminal 2',
-            arrTime: '13:00',
-            arrDateFormatted: '',
-            arrAirport: '',
-            arrTerminal: '',
-            route: '',
+            passengerType: 'Adult',
+            flights: [{
+                flightNo: 'AK',
+                airlineName: 'AirAsia Berhad',
+                depTime: '12:00',
+                depDateFormatted: '',
+                depAirport: 'Kuala Lumpur International Airport (KUL)',
+                depTerminal: 'Terminal 2',
+                arrTime: '13:00',
+                arrDateFormatted: '',
+                arrAirport: '',
+                arrTerminal: '',
+                route: ''
+            }],
             checkedBaggage: '30 kg per person\nEach piece max 119 x 119 x 81 cm (total 319 cm)',
             carryOnBaggage: '1 piece per person\nMax 56 x 36 x 23 cm per piece',
             personalItem: '1 piece per person\nMax 40 x 30 x 10 cm per piece, fits under the seat in front of you'
