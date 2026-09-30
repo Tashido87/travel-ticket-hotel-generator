@@ -56,8 +56,6 @@ function initAgodaHotelFeature() {
     const closeBtn = document.getElementById('chinaHotelModalCloseBtn');
     const cancelBtn = document.getElementById('chinaHotelCancelBtn');
     const downloadPdfBtn = document.getElementById('chinaHotelDownloadPdfBtn');
-    const downloadImgBtn = document.getElementById('chinaHotelDownloadImgBtn');
-    const shareBtn = document.getElementById('chinaHotelShareBtn');
     const previewContainer = document.getElementById('agodaPreviewContainer');
     const rollBookingBtn = document.getElementById('agoda_roll_booking_id');
     const rollMemberBtn = document.getElementById('agoda_roll_member_id');
@@ -302,33 +300,6 @@ function initAgodaHotelFeature() {
             downloadPdfBtn.disabled = false;
         }
     });
-
-    downloadImgBtn?.addEventListener('click', async () => {
-        showToast('Saving official Agoda image...', 'info');
-        try {
-            downloadImgBtn.disabled = true;
-            downloadImgBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Image...';
-            const data = collectFormData();
-            const filename = await downloadAgodaImage(data);
-            showToast(`Image saved: ${filename}`, 'success');
-        } catch (err) {
-            console.error('Image generation error:', err);
-            showToast(`Could not save image: ${err.message}`, 'error');
-        } finally {
-            downloadImgBtn.disabled = false;
-            downloadImgBtn.innerHTML = '<i class="fa-solid fa-image"></i> Save Photo';
-        }
-    });
-
-    shareBtn?.addEventListener('click', async () => {
-        try {
-            const data = collectFormData();
-            await shareAgodaBooking(data);
-        } catch (err) {
-            console.error('Share error:', err);
-            showToast(`Share failed: ${err.message}`, 'error');
-        }
-    });
 }
 
 // --- AIRASIA & VIETJET CONTROLLER ---
@@ -341,8 +312,6 @@ function initAirAsiaFeature() {
     const closeBtn = document.getElementById('airAsiaModalCloseBtn');
     const cancelBtn = document.getElementById('airAsiaCancelBtn');
     const downloadPdfBtn = document.getElementById('airAsiaDownloadPdfBtn');
-    const downloadImgBtn = document.getElementById('airAsiaDownloadImgBtn');
-    const shareBtn = document.getElementById('airAsiaShareBtn');
     const previewContainer = document.getElementById('airAsiaPreviewContainer');
     const airlineSelect = document.getElementById('aa_airline_select');
     const addPaxBtn = document.getElementById('aa_add_pax_btn');
@@ -602,32 +571,6 @@ function initAirAsiaFeature() {
         } finally {
             downloadPdfBtn.disabled = false;
             downloadPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download PDF';
-        }
-    });
-
-    downloadImgBtn?.addEventListener('click', async () => {
-        try {
-            downloadImgBtn.disabled = true;
-            downloadImgBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Image...';
-            const data = collectFormData();
-            const filename = await downloadAirAsiaImage(data);
-            showToast(`Image saved: ${filename}`, 'success');
-        } catch (err) {
-            console.error('Image generation error:', err);
-            showToast(`Could not save image: ${err.message}`, 'error');
-        } finally {
-            downloadImgBtn.disabled = false;
-            downloadImgBtn.innerHTML = '<i class="fa-solid fa-image"></i> Save Photo';
-        }
-    });
-
-    shareBtn?.addEventListener('click', async () => {
-        try {
-            const data = collectFormData();
-            await shareAirAsiaTicket(data);
-        } catch (err) {
-            console.error('Share error:', err);
-            showToast(`Share failed: ${err.message}`, 'error');
         }
     });
 }
