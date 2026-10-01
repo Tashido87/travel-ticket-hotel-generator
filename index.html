@@ -100,22 +100,22 @@
             </div>
         </section>
 
-        <!-- FEATURE 2: AIRASIA & VIETJET E-TICKET GENERATOR -->
+        <!-- FEATURE 2: AIRLINE E-TICKET GENERATOR -->
         <section class="service-panel" id="airAsiaPanel">
             <div class="service-panel-header">
                 <span class="service-panel-icon" style="background: rgba(227, 30, 36, 0.1); color: #E31E24;">
                     <i class="fa-solid fa-plane-departure"></i>
                 </span>
                 <div>
-                    <h2>AirAsia & VietJet E-Ticket Generator</h2>
-                    <p class="service-panel-desc">Auto-detects Trip.com / OTA PDF itinerary and converts into official AirAsia or VietJet Air E-Ticket</p>
+                    <h2>E-Ticket Generator</h2>
+                    <p class="service-panel-desc">Auto-detects Trip.com / OTA PDF itinerary and converts into official AirAsia, VietJet Air, or Thai Airways E-Ticket</p>
                 </div>
             </div>
 
             <div class="airasia-upload-zone" id="airAsiaDropZone">
                 <i class="fa-solid fa-file-pdf airasia-upload-icon"></i>
-                <div class="airasia-upload-title">Drop Trip.com / OTA PDF here or click to browse</div>
-                <div class="airasia-upload-sub">Auto-detects AirAsia & VietJet Air, extracts PNR, passengers, schedule & baggage</div>
+                <div class="airasia-upload-title">Drop Trip.com / OTA / Thai Airways PDF here or click to browse</div>
+                <div class="airasia-upload-sub">Auto-detects AirAsia, VietJet Air & Thai Airways (TG), extracts PNR, passengers, schedule & baggage</div>
                 <input type="file" id="airAsiaFileInput" accept=".pdf" style="display: none;">
             </div>
 
@@ -317,7 +317,7 @@ Bangkok (and vicinity), Thailand</textarea>
             <div class="modal-header">
                 <h2>
                     <i class="fa-solid fa-plane-departure" style="color:#E31E24;"></i>
-                    <span id="airAsiaModalTitle">AirAsia & VietJet E-Ticket Generator</span>
+                    <span id="airAsiaModalTitle">E-Ticket Generator</span>
                 </h2>
                 <button type="button" class="modal-close" id="airAsiaModalCloseBtn">&times;</button>
             </div>
@@ -335,22 +335,23 @@ Bangkok (and vicinity), Thailand</textarea>
                             <div class="airasia-form-group" style="grid-column: 1 / -1;">
                                 <label for="aa_airline_select" style="font-weight:700;">Airline Template</label>
                                 <select id="aa_airline_select" style="font-weight:600;">
-                                    <option value="AirAsia">AirAsia</option>
-                                    <option value="VietJet Air">VietJet Air</option>
+                                    <option value="AirAsia">AirAsia (Red Template)</option>
+                                    <option value="VietJet Air">VietJet Air (Red Template)</option>
+                                    <option value="Thai Airways">Thai Airways (Purple & Gold Template)</option>
                                 </select>
                             </div>
                         </div>
 
                         <!-- Booking Details -->
-                        <div class="airasia-form-section-title">Booking Information</div>
+                        <div class="airasia-form-section-title">Booking Details</div>
                         <div class="airasia-form-row">
                             <div class="airasia-form-group">
-                                <label for="aa_booking_no">Booking Number</label>
-                                <input type="text" id="aa_booking_no" placeholder="e.g. 1658114947014387">
+                                <label for="aa_booking_no">Booking No. / Ref</label>
+                                <input type="text" id="aa_booking_no" placeholder="e.g. E9NGB4 / 1658114947014387">
                             </div>
                             <div class="airasia-form-group">
-                                <label for="aa_pnr">Airline PNR</label>
-                                <input type="text" id="aa_pnr" placeholder="e.g. N728NB" style="text-transform:uppercase;">
+                                <label for="aa_pnr">Airline PNR / Booking Ref</label>
+                                <input type="text" id="aa_pnr" placeholder="e.g. E9NGB4 / N728NB">
                             </div>
                         </div>
                         <div class="airasia-form-row">
@@ -360,7 +361,17 @@ Bangkok (and vicinity), Thailand</textarea>
                             </div>
                             <div class="airasia-form-group">
                                 <label for="aa_class">Class</label>
-                                <input type="text" id="aa_class" placeholder="Economy">
+                                <input type="text" id="aa_class" placeholder="Economy (T)">
+                            </div>
+                        </div>
+                        <div class="airasia-form-row">
+                            <div class="airasia-form-group">
+                                <label for="aa_issued_date">Issued Date</label>
+                                <input type="text" id="aa_issued_date" placeholder="e.g. 28 Sep 2026">
+                            </div>
+                            <div class="airasia-form-group">
+                                <label for="aa_checkin_notice">Check-in Time</label>
+                                <input type="text" id="aa_checkin_notice" placeholder="e.g. (BKK) 29 Sep 2026, 9:45 PM">
                             </div>
                         </div>
 
