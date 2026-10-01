@@ -22,7 +22,8 @@ import {
     renderAirAsiaTicketHtml,
     downloadAirAsiaPdf,
     downloadAirAsiaImage,
-    shareAirAsiaTicket
+    shareAirAsiaTicket,
+    formatCheckedBaggageLine
 } from './airasia-converter.js';
 
 // --- DATE HELPER & PAIRED DATEPICKER LOGIC ---
@@ -722,19 +723,111 @@ function initAirAsiaFeature() {
         const selectedAirline = e.target.value;
         const bagCheckedEl = document.getElementById('aa_bag_checked');
         const currentFlights = collectFlights();
-        if (selectedAirline === 'Thai Airways') {
-            if (bagCheckedEl) {
-                bagCheckedEl.value = 'Checked: 2 Pcs, 23 kg   |   Carry-on: 7 kg';
+        const currentBagVal = bagCheckedEl?.value || '';
+        const isStandardLayoutAirline = ['EVA Air', 'Thai Airways', 'Singapore Airlines', 'Scoot'].includes(selectedAirline);
+
+        if (isStandardLayoutAirline && bagCheckedEl) {
+            bagCheckedEl.value = formatCheckedBaggageLine(currentBagVal);
+        } else if (!isStandardLayoutAirline && bagCheckedEl && currentBagVal.startsWith('Checked:')) {
+            const kgMatch = currentBagVal.match(/(\d+)\s*kg/i);
+            const kg = kgMatch ? kgMatch[1] : (selectedAirline === 'VietJet Air' ? '20' : '30');
+            bagCheckedEl.value = `${kg} kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm`;
+        }
+
+        if (selectedAirline === 'Scoot') {
+            const checkinEl = document.getElementById('aa_checkin_notice');
+            if (checkinEl && !checkinEl.value) {
+                checkinEl.value = '(SIN) 1 Nov 2026, 7:00 AM';
             }
+            currentFlights.forEach(f => {
+                if (!f.airlineName || /airasia|vietjet|thai|singapore|eva/i.test(f.airlineName)) {
+                    f.airlineName = 'Scoot';
+                }
+                if (!f.flightNo || /^(AK|VJ|TG|SQ|BR)/i.test(f.flightNo)) {
+                    f.flightNo = 'TR 001';
+                }
+                if (!f.duration) f.duration = '2h 30min, Non-Stop';
+                if (!f.aircraft) f.aircraft = 'Airbus A320neo';
+                if (!f.flightClass || f.flightClass === 'Economy') f.flightClass = 'Economy (Fly)';
+                if (!f.depAirport || f.depAirport.includes('Kuala Lumpur') || f.depAirport.includes('Taipei')) {
+                    f.depAirport = 'Singapore - Changi (SIN)';
+                    f.depTerminal = 'Terminal 1';
+                }
+                if (!f.arrAirport || f.arrAirport.includes('London')) {
+                    f.arrAirport = 'Bangkok - Don Mueang (DMK)';
+                    f.arrTerminal = 'Terminal 1';
+                }
+                if (!f.route || f.route.includes('KUL') || f.route.includes('TPE')) {
+                    f.route = 'SIN - DMK';
+                }
+            });
+            renderFlightRows(currentFlights);
+        } else if (selectedAirline === 'EVA Air') {
+            const checkinEl = document.getElementById('aa_checkin_notice');
+            if (checkinEl && !checkinEl.value) {
+                checkinEl.value = '(TPE) 1 Nov 2026, 6:25 AM';
+            }
+            currentFlights.forEach(f => {
+                if (!f.airlineName || /airasia|vietjet|thai|singapore|scoot/i.test(f.airlineName)) {
+                    f.airlineName = 'EVA Air';
+                }
+                if (!f.flightNo || /^(AK|VJ|TG|SQ|TR)/i.test(f.flightNo)) {
+                    f.flightNo = 'BR 001';
+                }
+                if (!f.duration) f.duration = '3h 40min, Non-Stop';
+                if (!f.aircraft) f.aircraft = 'Boeing 787-10';
+                if (!f.flightClass || f.flightClass === 'Economy') f.flightClass = 'Economy (Y)';
+                if (!f.depAirport || f.depAirport.includes('Kuala Lumpur') || f.depAirport.includes('Singapore')) {
+                    f.depAirport = 'Taipei - Taoyuan (TPE)';
+                    f.depTerminal = 'Terminal 2';
+                }
+                if (!f.arrAirport || f.arrAirport.includes('London')) {
+                    f.arrAirport = 'Bangkok - Suvarnabhumi (BKK)';
+                    f.arrTerminal = '';
+                }
+                if (!f.route || f.route.includes('KUL') || f.route.includes('SIN')) {
+                    f.route = 'TPE - BKK';
+                }
+            });
+            renderFlightRows(currentFlights);
+        } else if (selectedAirline === 'Singapore Airlines') {
+            const checkinEl = document.getElementById('aa_checkin_notice');
+            if (checkinEl && !checkinEl.value) {
+                checkinEl.value = '(SIN) 1 Nov 2026, 6:00 AM';
+            }
+            currentFlights.forEach(f => {
+                if (!f.airlineName || /airasia|vietjet|thai|scoot/i.test(f.airlineName)) {
+                    f.airlineName = 'Singapore Airlines';
+                }
+                if (!f.flightNo || /^(AK|VJ|TG|TR)/i.test(f.flightNo)) {
+                    f.flightNo = 'SQ 001';
+                }
+                if (!f.duration) f.duration = '13h 30min, Non-Stop';
+                if (!f.aircraft) f.aircraft = 'Airbus A380-800';
+                if (!f.flightClass || f.flightClass === 'Economy') f.flightClass = 'Economy (S)';
+                if (!f.depAirport || f.depAirport.includes('Kuala Lumpur') || f.depAirport.includes('Bangkok')) {
+                    f.depAirport = 'Singapore - Changi (SIN)';
+                    f.depTerminal = 'Terminal 3';
+                }
+                if (!f.arrAirport) {
+                    f.arrAirport = 'London - Heathrow (LHR)';
+                    f.arrTerminal = 'Terminal 2';
+                }
+                if (!f.route || f.route.includes('KUL') || f.route.includes('BKK')) {
+                    f.route = 'SIN - LHR';
+                }
+            });
+            renderFlightRows(currentFlights);
+        } else if (selectedAirline === 'Thai Airways') {
             const checkinEl = document.getElementById('aa_checkin_notice');
             if (checkinEl && !checkinEl.value) {
                 checkinEl.value = '(BKK) 29 Sep 2026, 9:45 PM';
             }
             currentFlights.forEach(f => {
-                if (!f.airlineName || /airasia|vietjet/i.test(f.airlineName)) {
+                if (!f.airlineName || /airasia|vietjet|singapore|scoot/i.test(f.airlineName)) {
                     f.airlineName = 'Thai Airways International';
                 }
-                if (!f.flightNo || /^(AK|VJ)/i.test(f.flightNo)) {
+                if (!f.flightNo || /^(AK|VJ|SQ|TR)/i.test(f.flightNo)) {
                     f.flightNo = 'TG 910';
                 }
                 if (!f.duration) f.duration = '12h 30min, Non-Stop';
@@ -755,14 +848,14 @@ function initAirAsiaFeature() {
             renderFlightRows(currentFlights);
         } else if (selectedAirline === 'VietJet Air') {
             currentFlights.forEach(f => {
-                if (!f.airlineName || /airasia|thai/i.test(f.airlineName)) f.airlineName = 'VietJet Air';
-                if (!f.flightNo || /^(AK|TG)/i.test(f.flightNo)) f.flightNo = 'VJ';
+                if (!f.airlineName || /airasia|thai|singapore|scoot/i.test(f.airlineName)) f.airlineName = 'VietJet Air';
+                if (!f.flightNo || /^(AK|TG|SQ|TR)/i.test(f.flightNo)) f.flightNo = 'VJ';
             });
             renderFlightRows(currentFlights);
         } else if (selectedAirline === 'AirAsia') {
             currentFlights.forEach(f => {
-                if (!f.airlineName || /vietjet|thai/i.test(f.airlineName)) f.airlineName = 'AirAsia Berhad';
-                if (!f.flightNo || /^(VJ|TG)/i.test(f.flightNo)) f.flightNo = 'AK';
+                if (!f.airlineName || /vietjet|thai|singapore|scoot/i.test(f.airlineName)) f.airlineName = 'AirAsia Berhad';
+                if (!f.flightNo || /^(VJ|TG|SQ|TR)/i.test(f.flightNo)) f.flightNo = 'AK';
             });
             renderFlightRows(currentFlights);
         }
@@ -777,7 +870,16 @@ function initAirAsiaFeature() {
 
         let defaultAirlineName = 'AirAsia Berhad';
         let defaultFlightNo = 'AK';
-        if (selectedA === 'Thai Airways') {
+        if (selectedA === 'Scoot') {
+            defaultAirlineName = 'Scoot';
+            defaultFlightNo = 'TR 001';
+        } else if (selectedA === 'EVA Air') {
+            defaultAirlineName = 'EVA Air';
+            defaultFlightNo = 'BR 001';
+        } else if (selectedA === 'Singapore Airlines') {
+            defaultAirlineName = 'Singapore Airlines';
+            defaultFlightNo = 'SQ 001';
+        } else if (selectedA === 'Thai Airways') {
             defaultAirlineName = 'Thai Airways International';
             defaultFlightNo = 'TG 910';
         } else if (selectedA === 'VietJet Air') {
@@ -786,15 +888,21 @@ function initAirAsiaFeature() {
         }
 
         const safeAirlineName = (primaryFlight.airlineName && (
-            (selectedA === 'Thai Airways' && !/airasia|vietjet/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'VietJet Air' && !/airasia|thai/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'AirAsia' && !/vietjet|thai/i.test(primaryFlight.airlineName))
+            (selectedA === 'Scoot' && !/airasia|vietjet|thai|singapore|eva/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'EVA Air' && !/airasia|vietjet|thai|singapore|scoot/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'Singapore Airlines' && !/airasia|vietjet|thai|eva|scoot/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'Thai Airways' && !/airasia|vietjet|singapore|eva|scoot/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'VietJet Air' && !/airasia|thai|singapore|eva|scoot/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'AirAsia' && !/vietjet|thai|singapore|eva|scoot/i.test(primaryFlight.airlineName))
         )) ? primaryFlight.airlineName : defaultAirlineName;
 
         const safeFlightNo = (primaryFlight.flightNo && (
-            (selectedA === 'Thai Airways' && !/^(AK|VJ)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'VietJet Air' && !/^(AK|TG)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'AirAsia' && !/^(VJ|TG)/i.test(primaryFlight.flightNo))
+            (selectedA === 'Scoot' && !/^(AK|VJ|TG|SQ|BR)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'EVA Air' && !/^(AK|VJ|TG|SQ|TR)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'Singapore Airlines' && !/^(AK|VJ|TG|BR|TR)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'Thai Airways' && !/^(AK|VJ|SQ|BR|TR)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'VietJet Air' && !/^(AK|TG|SQ|BR|TR)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'AirAsia' && !/^(VJ|TG|SQ|BR|TR)/i.test(primaryFlight.flightNo))
         )) ? primaryFlight.flightNo : defaultFlightNo;
 
         const formPnr = (document.getElementById('aa_pnr')?.value || '').trim().toUpperCase();
@@ -887,7 +995,14 @@ function initAirAsiaFeature() {
             }];
         renderFlightRows(flList);
 
-        if (document.getElementById('aa_bag_checked')) document.getElementById('aa_bag_checked').value = data.checkedBaggage || (data.airline === 'Thai Airways' ? 'Checked: 2 Pcs, 23 kg   |   Carry-on: 7 kg' : '30 kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm');
+        const isStandardLayoutAirline = ['EVA Air', 'Thai Airways', 'Singapore Airlines', 'Scoot'].includes(data.airline);
+        let initialCheckedBag = data.checkedBaggage;
+        if (isStandardLayoutAirline) {
+            initialCheckedBag = formatCheckedBaggageLine(initialCheckedBag || 'Checked: 30 kg   |   Carry-on: 7 kg');
+        } else if (!initialCheckedBag) {
+            initialCheckedBag = '30 kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm';
+        }
+        if (document.getElementById('aa_bag_checked')) document.getElementById('aa_bag_checked').value = initialCheckedBag;
         if (document.getElementById('aa_bag_carry')) document.getElementById('aa_bag_carry').value = data.carryOnBaggage || '1 piece per person\nMax 56 x 36 x 23 cm per piece';
         if (document.getElementById('aa_bag_personal')) document.getElementById('aa_bag_personal').value = data.personalItem || '1 piece per person\nMax 40 x 30 x 10 cm per piece, fits under the seat in front of you';
 

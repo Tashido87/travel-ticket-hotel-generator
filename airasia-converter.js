@@ -8,18 +8,27 @@ import { showToast } from './utils.js';
 let cachedAirAsiaLogoDataUrl = null;
 let cachedVietJetLogoDataUrl = null;
 let cachedThaiLogoDataUrl = null;
+let cachedSIADataUrl = null;
+let cachedEvaAirLogoDataUrl = null;
+let cachedScootLogoDataUrl = null;
 
 /**
  * Preload and cache Airline logo as data URL for jsPDF and HTML preview
  */
 export async function getAirlineLogoDataUrl(airline = 'AirAsia') {
+    const isScoot = (airline === 'Scoot') || /scoot|flyscoot|\bTR\b/i.test(airline || '');
+    const isEva = (airline === 'EVA Air') || /eva\s*air|\bBR\b/i.test(airline || '');
     const isThai = (airline === 'Thai Airways') || /thai\s*airways/i.test(airline || '');
     const isVietJet = (airline === 'VietJet Air') || /vietjet/i.test(airline || '');
+    const isSIA = (airline === 'Singapore Airlines') || /singapore\s*air(?:lines)?|\bSQ\b/i.test(airline || '');
+    if (isScoot && cachedScootLogoDataUrl) return cachedScootLogoDataUrl;
+    if (isEva && cachedEvaAirLogoDataUrl) return cachedEvaAirLogoDataUrl;
     if (isThai && cachedThaiLogoDataUrl) return cachedThaiLogoDataUrl;
     if (isVietJet && cachedVietJetLogoDataUrl) return cachedVietJetLogoDataUrl;
-    if (!isThai && !isVietJet && cachedAirAsiaLogoDataUrl) return cachedAirAsiaLogoDataUrl;
+    if (isSIA && cachedSIADataUrl) return cachedSIADataUrl;
+    if (!isScoot && !isEva && !isThai && !isVietJet && !isSIA && cachedAirAsiaLogoDataUrl) return cachedAirAsiaLogoDataUrl;
 
-    const logoSrc = isThai ? 'thai-airways-logo.png?v=2' : (isVietJet ? 'vietjet-logo.png?v=2' : 'airasia-logo.png?v=2');
+    const logoSrc = isScoot ? 'scoot-logo.png?v=1' : (isEva ? 'eva-air-logo.png?v=2' : (isThai ? 'thai-airways-logo.png?v=2' : (isVietJet ? 'vietjet-logo.png?v=2' : (isSIA ? 'singapore-airlines-logo.png?v=2' : 'airasia-logo.png?v=2'))));
     try {
         const img = new Image();
         img.crossOrigin = 'Anonymous';
@@ -34,10 +43,16 @@ export async function getAirlineLogoDataUrl(airline = 'AirAsia') {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
         const dataUrl = canvas.toDataURL('image/png');
-        if (isThai) {
+        if (isScoot) {
+            cachedScootLogoDataUrl = dataUrl;
+        } else if (isEva) {
+            cachedEvaAirLogoDataUrl = dataUrl;
+        } else if (isThai) {
             cachedThaiLogoDataUrl = dataUrl;
         } else if (isVietJet) {
             cachedVietJetLogoDataUrl = dataUrl;
+        } else if (isSIA) {
+            cachedSIADataUrl = dataUrl;
         } else {
             cachedAirAsiaLogoDataUrl = dataUrl;
         }
@@ -186,6 +201,9 @@ const AIRPORT_CODE_MAP = {
     'chubu': 'NGO',
     'centrair': 'NGO',
     'taipei': 'TPE',
+    'taoyuan': 'TPE',
+    'songshan': 'TSA',
+    'kaohsiung': 'KHH',
     'hong kong': 'HKG',
     'macau': 'MFM',
     'guangzhou': 'CAN',
@@ -236,6 +254,8 @@ export function extractCityName(name) {
     if (lower.includes('yangon')) return 'Yangon';
     if (lower.includes('mandalay')) return 'Mandalay';
     if (lower.includes('narita') || lower.includes('haneda') || lower.includes('tokyo')) return 'Tokyo';
+    if (lower.includes('taipei') || lower.includes('taoyuan') || lower.includes('songshan')) return 'Taipei';
+    if (lower.includes('kaohsiung')) return 'Kaohsiung';
     if (lower.includes('singapore') || lower.includes('changi')) return 'Singapore';
     if (lower.includes('incheon') || lower.includes('seoul')) return 'Seoul';
     if (lower.includes('kansai') || lower.includes('osaka')) return 'Osaka';
@@ -254,6 +274,25 @@ export function extractCityName(name) {
 }
 
 /**
+ * Format raw baggage string into standardized single-line "Checked: X | Carry-on: 7 kg" format
+ */
+export function formatCheckedBaggageLine(val) {
+    if (!val) return 'Checked: 30 kg   |   Carry-on: 7 kg';
+    val = String(val).trim();
+    if (val.startsWith('Checked:')) return val;
+    const pieceMatch = val.match(/(\d+)\s*(?:pieces?|pcs)\s*(?:,\s*|\s+)(\d+)\s*kg/i);
+    if (pieceMatch) {
+        return `Checked: ${pieceMatch[1]} Pcs, ${pieceMatch[2]} kg   |   Carry-on: 7 kg`;
+    }
+    const weightMatch = val.match(/(\d+)\s*kg/i);
+    if (weightMatch) {
+        return `Checked: ${weightMatch[1]} kg   |   Carry-on: 7 kg`;
+    }
+    const firstLine = val.split(/[\r\n]+/)[0].trim();
+    return `Checked: ${firstLine}   |   Carry-on: 7 kg`;
+}
+
+/**
  * Parse text extracted from Trip.com / OTA PDF itinerary
  */
 export function parseItineraryText(rawText) {
@@ -261,11 +300,20 @@ export function parseItineraryText(rawText) {
 
     // 0. Airline Auto-Detection
     let airline = 'AirAsia';
+    const isScoot = /(?:scoot|flyscoot|flyscoot\.com|\bTR\s*\d{2,4}\b)/i.test(clean);
+    const isEva = /(?:eva\s*air(?:ways)?|evaair\.com|\bBR\s*\d{2,4}\b)/i.test(clean);
+    const isSIA = /(?:singapore\s*air(?:lines)?|singaporeair\.com|\bSQ\s*\d{2,4}\b)/i.test(clean);
     const isThai = /(?:thai\s*airways|\bTG\s*\d{3,4}\b)/i.test(clean);
     const isVietJet = /(?:vietjet|viet\s*jet|\bVJ\d{3,4}\b|\bVZ\d{3,4}\b)/i.test(clean);
     const isAirAsia = /(?:airasia|air\s*asia|\b(?:AK|FD|QZ|D7|XJ|Z2)\d{3,4}\b)/i.test(clean);
 
-    if (isThai) {
+    if (isScoot) {
+        airline = 'Scoot';
+    } else if (isEva) {
+        airline = 'EVA Air';
+    } else if (isSIA) {
+        airline = 'Singapore Airlines';
+    } else if (isThai) {
         airline = 'Thai Airways';
     } else if (isVietJet) {
         airline = 'VietJet Air';
@@ -366,6 +414,21 @@ export function parseItineraryText(rawText) {
     const thaiPaxSection = clean.match(/Passenger\s*Details\s+([\s\S]*?)(?=Baggage|Notes|Important|$)/i);
     if (thaiPaxSection) {
         const pLines = thaiPaxSection[1].split(/[\r\n]+/).map(s => s.trim()).filter(s => s && !/^(Name|E-Ticket|Passport|Expiry|Passenger|Details)/i.test(s));
+        for (const pl of pLines) {
+            const rowMatch = pl.match(/^([A-Za-z\s]{3,40}?)\s+(?:([0-9-]{10,})|To\s*be\s*advised[^\n\r]*?)\s+(Adult|Child|Infant)(?:\s+([A-Z0-9—\-]+))?/i);
+            if (rowMatch) {
+                const rName = rowMatch[1].replace(/\s+/g, ' ').trim().toUpperCase();
+                if (!/^(NAME|E-TICKET|TYPE|SEAT|PASSENGER)/i.test(rName) && !passengers.some(p => p.name === rName)) {
+                    passengers.push({
+                        name: rName,
+                        eticket: rowMatch[2] || '',
+                        eTicketNo: rowMatch[2] || '',
+                        type: rowMatch[3] || 'Adult',
+                        seat: (rowMatch[4] && rowMatch[4] !== '—') ? rowMatch[4] : ''
+                    });
+                }
+            }
+        }
         let i = 0;
         while (i < pLines.length) {
             const nameCandidate = pLines[i];
@@ -556,9 +619,9 @@ export function parseItineraryText(rawText) {
     // 8. Parse Multiple Flight Sectors
     const flights = [];
 
-    // Check Thai Airways direct Flight Details block:
+    // Check Direct Confirmation Flight Details block (Thai Airways / Singapore Airlines / EVA Air / Scoot):
     const thaiFlMatch = clean.match(/Flight\s*Details\s+([\s\S]*?)(?=Passenger\s*Details|Baggage|Notes|$)/i);
-    if (airline === 'Thai Airways' && thaiFlMatch) {
+    if ((airline === 'Scoot' || airline === 'EVA Air' || airline === 'Singapore Airlines' || airline === 'Thai Airways') && thaiFlMatch) {
         const tfText = thaiFlMatch[1].trim();
         const tfLines = tfText.split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
         
@@ -567,30 +630,40 @@ export function parseItineraryText(rawText) {
         let depCity = routeMatch ? routeMatch[1].trim() : '';
         let arrCity = routeMatch ? routeMatch[2].trim() : '';
 
-        let flightNo = 'TG 910';
-        let carrier = 'Thai Airways International';
-        let flCarrierMatch = tfLines[1]?.match(/(TG\s*\d{3,4})\s*(?:\||-)?\s*(.*)/i);
+        let flightNo = (airline === 'Scoot' ? 'TR 001' : (airline === 'EVA Air' ? 'BR 001' : (airline === 'Singapore Airlines' ? 'SQ 001' : 'TG 910')));
+        let carrier = (airline === 'Scoot' ? 'Scoot' : (airline === 'EVA Air' ? 'EVA Air' : (airline === 'Singapore Airlines' ? 'Singapore Airlines' : 'Thai Airways International')));
+        const flCarrierMatch = tfText.match(/([A-Z0-9]{2,3}\s*\d{2,4})\s*(?:\||-|\/)?\s*([A-Za-z\s]+)/i);
         if (flCarrierMatch) {
             flightNo = flCarrierMatch[1].toUpperCase();
             carrier = flCarrierMatch[2].trim() || carrier;
         }
 
-        let depTime = tfLines[2] || '';
-        let arrTime = tfLines[3] || '';
-        let depDateFormatted = tfLines[4] || '';
-        let arrDateFormatted = tfLines[5] || '';
+        const timesMatch = tfText.match(/\b(\d{1,2}:\d{2})\b[^\n\r\d]*\b(\d{1,2}:\d{2})\b/);
+        const datesMatch = [...tfText.matchAll(/\b([A-Za-z]+day,?\s*)?(\d{1,2}\s+[A-Za-z]{3,}\s+\d{4})\b/gi)];
+
+        let depTime = timesMatch ? timesMatch[1] : (tfLines[2] || '');
+        let arrTime = timesMatch ? timesMatch[2] : (tfLines[3] || '');
+        let depDateFormatted = datesMatch.length >= 1 ? datesMatch[0][0] : (tfLines[4] || '');
+        let arrDateFormatted = datesMatch.length >= 2 ? datesMatch[1][0] : (datesMatch.length === 1 ? datesMatch[0][0] : (tfLines[5] || ''));
         let depAirport = tfLines[6] || '';
         let arrAirport = tfLines[7] || '';
 
-        const durationMatch = tfText.match(/Duration\s*\n\s*([^\n\r]+)/i);
-        const aircraftMatch = tfText.match(/Aircraft\s*\n\s*([^\n\r]+)/i);
-        const classMatch = tfText.match(/Class\s*\n\s*([^\n\r]+)/i);
-        const routeCodeMatch = tfText.match(/Route\s*\n\s*([^\n\r]+)/i);
+        const durationMatch = tfText.match(/Duration\s*[:\s]*([0-9]+\s*h(?:ours?)?(?:\s*[0-9]+\s*m(?:in)?)?(?:,?\s*Non[- ]?Stop)?)/i) || tfText.match(/Duration\s*\n\s*([^\n\r]+)/i);
+        const aircraftMatch = tfText.match(/Aircraft\s*[:\s]*([A-Za-z0-9\s\-]+?)(?=\s+Class|\s+Route|\n|$)/i) || tfText.match(/Aircraft\s*\n\s*([^\n\r]+)/i);
+        const classMatch = tfText.match(/Class\s*[:\s]*([A-Za-z0-9\s\(\)]+?)(?=\s+Route|\n|$)/i) || tfText.match(/Class\s*\n\s*([^\n\r]+)/i);
+        const routeCodeMatch = tfText.match(/Route\s*[:\s]*([A-Z]{3}\s*-\s*[A-Z]{3})/i) || tfText.match(/Route\s*\n\s*([^\n\r]+)/i);
 
-        const duration = durationMatch ? durationMatch[1].trim() : '12h 30min, Non-Stop';
-        const aircraft = aircraftMatch ? aircraftMatch[1].trim() : 'Boeing 777-300ER';
+        const duration = durationMatch ? durationMatch[1].trim() : (airline === 'Scoot' ? '3h 30min, Non-Stop' : (airline === 'EVA Air' ? '3h 40min, Non-Stop' : (airline === 'Singapore Airlines' ? '13h 30min, Non-Stop' : '12h 30min, Non-Stop')));
+        const aircraft = aircraftMatch ? aircraftMatch[1].trim() : (airline === 'Scoot' ? 'Airbus A320neo' : (airline === 'EVA Air' ? 'Boeing 787-10' : (airline === 'Singapore Airlines' ? 'Airbus A380-800' : 'Boeing 777-300ER')));
         const secClass = classMatch ? classMatch[1].trim() : flightClass;
-        const route = routeCodeMatch ? routeCodeMatch[1].trim() : (depCity && arrCity ? `${depCity} - ${arrCity}` : 'BKK - LHR');
+        const defaultRoute = (airline === 'Scoot' ? 'SIN - DMK' : (airline === 'EVA Air' ? 'TPE - BKK' : (airline === 'Singapore Airlines' ? 'SIN - LHR' : 'BKK - LHR')));
+        const route = routeCodeMatch ? routeCodeMatch[1].trim() : (depCity && arrCity ? `${depCity} - ${arrCity}` : defaultRoute);
+
+        const airportMatches = [...tfText.matchAll(/([A-Za-z\s\-]+?\([A-Z]{3}\)(?:,\s*Terminal\s*[0-9A-Z]+)?)/gi)];
+        if (airportMatches && airportMatches.length >= 2) {
+            depAirport = airportMatches[0][1].trim();
+            arrAirport = airportMatches[1][1].trim();
+        }
 
         let depTerminal = '';
         let arrTerminal = '';
@@ -644,8 +717,8 @@ export function parseItineraryText(rawText) {
             const arrCity = extractCityName(arr.airport);
             const route = `${depCity || 'DEP'} (${depCode || 'DEP'}) - ${arrCity || 'ARR'} (${arrCode || 'ARR'})`;
 
-            const defaultCarrier = airline === 'Thai Airways' ? 'Thai Airways International' : (airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad');
-            const defaultFlightNo = airline === 'Thai Airways' ? 'TG 910' : '';
+            const defaultCarrier = airline === 'EVA Air' ? 'EVA Air' : (airline === 'Singapore Airlines' ? 'Singapore Airlines' : (airline === 'Thai Airways' ? 'Thai Airways International' : (airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad')));
+            const defaultFlightNo = airline === 'EVA Air' ? 'BR 001' : (airline === 'Singapore Airlines' ? 'SQ 001' : (airline === 'Thai Airways' ? 'TG 910' : ''));
 
             flights.push({
                 flightNo: defaultFlightNo,
@@ -791,19 +864,38 @@ export function parseItineraryText(rawText) {
     let carryOnBaggage = '1 piece per person\nMax 56 x 36 x 23 cm per piece';
     let personalItem = '1 piece per person\nMax 40 x 30 x 10 cm per piece, fits under the seat in front of you';
 
-    if (airline === 'Thai Airways') {
+    if (airline === 'Scoot') {
+        const scootBagMatch = clean.match(/Checked:\s*([^\n\r]+)/i);
+        if (scootBagMatch) {
+            checkedBaggage = `Checked: ${scootBagMatch[1].trim()}`;
+        } else {
+            const bagWeight = clean.match(/(\d+)\s*kg/i);
+            checkedBaggage = bagWeight ? `Checked: ${bagWeight[1]} kg   |   Carry-on: 7 kg` : 'Checked: 30 kg   |   Carry-on: 7 kg';
+        }
+    } else if (airline === 'EVA Air' || airline === 'Thai Airways') {
         const thaiBagMatch = clean.match(/Checked:\s*([^\n\r]+)/i);
         if (thaiBagMatch) {
             checkedBaggage = `Checked: ${thaiBagMatch[1].trim()}`;
         } else {
-            const bagWeight = clean.match(/(\d+)\s*kg/i);
-            if (bagWeight && bagWeight[1] === '23') {
+            const pieceMatch = clean.match(/(\d+)\s*(?:pieces?|pcs)\s*(?:,\s*|\s+)(\d+)\s*kg/i);
+            const bagWeight = clean.match(/(?:Checked\s*baggage|Checked)[\s\S]*?(\d+)\s*kg/i) || clean.match(/(\d+)\s*kg/i);
+            if (pieceMatch) {
+                checkedBaggage = `Checked: ${pieceMatch[1]} Pcs, ${pieceMatch[2]} kg   |   Carry-on: 7 kg`;
+            } else if (bagWeight && bagWeight[1] === '23') {
                 checkedBaggage = 'Checked: 2 Pcs, 23 kg   |   Carry-on: 7 kg';
             } else if (bagWeight) {
                 checkedBaggage = `Checked: ${bagWeight[1]} kg   |   Carry-on: 7 kg`;
             } else {
-                checkedBaggage = 'Checked: 2 Pcs, 23 kg   |   Carry-on: 7 kg';
+                checkedBaggage = (airline === 'EVA Air' ? 'Checked: 2 Pcs, 23 kg   |   Carry-on: 7 kg' : 'Checked: 30 kg   |   Carry-on: 7 kg');
             }
+        }
+    } else if (airline === 'Singapore Airlines') {
+        const siaBagMatch = clean.match(/Checked:\s*([^\n\r]+)/i);
+        if (siaBagMatch) {
+            checkedBaggage = `Checked: ${siaBagMatch[1].trim()}`;
+        } else {
+            const bagWeight = clean.match(/(\d+)\s*kg/i);
+            checkedBaggage = bagWeight ? `Checked: ${bagWeight[1]} kg   |   Carry-on: 7 kg` : 'Checked: 30 kg   |   Carry-on: 7 kg';
         }
     } else {
         const bagBlock = clean.match(/Checked\s*baggage[\s\S]*?(?=(?:Carry-on|Personal|Important|$))/i);
@@ -847,7 +939,7 @@ export function parseItineraryText(rawText) {
         flights,
         // Primary flight fields for backward compatibility
         flightNo: primaryFlight.flightNo || '',
-        airlineName: primaryFlight.airlineName || (airline === 'Thai Airways' ? 'Thai Airways International' : (airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad')),
+        airlineName: primaryFlight.airlineName || (airline === 'EVA Air' ? 'EVA Air' : (airline === 'Singapore Airlines' ? 'Singapore Airlines' : (airline === 'Thai Airways' ? 'Thai Airways International' : (airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad')))),
         depTime: primaryFlight.depTime || '',
         depDateFormatted: primaryFlight.depDateFormatted || '',
         depAirport: primaryFlight.depAirport || '',
@@ -1148,12 +1240,12 @@ export async function generateThaiAirwaysPdfDoc(data) {
             const bgW = Math.min(tw + 8, 106);
             const bgH = 11.5;
 
-            doc.setFillColor(240, 232, 255); // Soft purple tint #F0E8FF
-            doc.setDrawColor(213, 203, 232); // #D5CBE8
-            doc.setLineWidth(0.5);
+            doc.setFillColor(255, 245, 102); // Highlight Pen Yellow #FFF566
+            doc.setDrawColor(230, 200, 0);   // Golden Yellow Border #E6C800
+            doc.setLineWidth(0.7);
             doc.roundedRect(127.6 + 4, by, bgW, bgH, 2, 2, 'FD');
 
-            doc.setTextColor(...P);
+            doc.setTextColor(...BLK);
             doc.text(sc.time, 127.6 + 8, baselineY);
         });
     } else {
@@ -1177,12 +1269,12 @@ export async function generateThaiAirwaysPdfDoc(data) {
         const by = stripY + 33.0;
         const baselineY = stripY + 42.0;
 
-        doc.setFillColor(240, 232, 255); // Soft purple tint #F0E8FF
-        doc.setDrawColor(213, 203, 232); // #D5CBE8
-        doc.setLineWidth(0.5);
+        doc.setFillColor(255, 245, 102); // Highlight Pen Yellow #FFF566
+        doc.setDrawColor(230, 200, 0);   // Golden Yellow Border #E6C800
+        doc.setLineWidth(0.7);
         doc.roundedRect(127.6 + 4, by, bgW, bgH, 2, 2, 'FD');
 
-        doc.setTextColor(...P);
+        doc.setTextColor(...BLK);
         doc.text(sc.time, 127.6 + 8, baselineY);
     }
 
@@ -1202,14 +1294,14 @@ export async function generateThaiAirwaysPdfDoc(data) {
     doc.text("Star", 501.7 + 5, stripY + 33);
     doc.text("Alliance", 501.7 + 5, stripY + 44);
 
-    let curY = stripY + stripH + 16; // ~212 pt
+    let curY = stripY + stripH + 20; // ~216 pt
 
     // 3. FLIGHT DETAILS
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...P);
     doc.text("Flight Details", marginL, curY);
-    curY += 8; // ~220 pt
+    curY += 8; // ~224 pt
 
     flights.forEach((f) => {
         const sDepCity = extractCityName(f.depAirport) || 'Bangkok';
@@ -1321,7 +1413,7 @@ export async function generateThaiAirwaysPdfDoc(data) {
         doc.setFont("helvetica", "normal");
         doc.text(f.aircraft || "Boeing 777-300ER", 377.0 + 6, curY + 15.5, { maxWidth: 160 });
 
-        curY += lowerBoxH + 14;
+        curY += lowerBoxH + 20;
     });
 
     // 4. PASSENGER DETAILS
@@ -1369,7 +1461,7 @@ export async function generateThaiAirwaysPdfDoc(data) {
         curY += paxRowH;
     });
 
-    curY += 16;
+    curY += 20;
 
     // 5. BAGGAGE & EXTRA SERVICES
     doc.setFont("helvetica", "bold");
@@ -1404,7 +1496,7 @@ export async function generateThaiAirwaysPdfDoc(data) {
         doc.text(bagInfo, 178.6 + 6, rowY + 15.5, { maxWidth: 350 });
     });
 
-    curY += totalBagH + 16;
+    curY += totalBagH + 20;
 
     // 6. NOTES
     doc.setFont("helvetica", "bold");
@@ -1453,9 +1545,1541 @@ export async function generateThaiAirwaysPdfDoc(data) {
 }
 
 /**
+ * Generate native vector jsPDF document for EVA Air matching official template
+ * Brand tokens:
+ * Primary (EVA green): #007A3D [0, 122, 61]
+ * Accent (EVA orange): #F26522 [242, 101, 34]
+ * Light tint: #EEF7F0 [238, 247, 240]
+ * Light orange: #FEF4EC [254, 244, 236]
+ * Border gray-green: #BCD8C2 [188, 216, 194]
+ * Border orange: #F26522 [242, 101, 34]
+ * Check-in highlight tint: #DDF3E4 [221, 243, 228] (border: #58B675, text: #007A3D)
+ */
+export async function generateEvaAirPdfDoc(data) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+
+    const logoDataUrl = await getAirlineLogoDataUrl('EVA Air');
+
+    const marginL = 42.5;
+    const rightEdge = 552.8;
+    const textW = rightEdge - marginL; // 510.3 pt (180mm)
+
+    const EVAG = [0, 122, 61];     // #007A3D EVA Green
+    const EVAO = [242, 101, 34];   // #F26522 EVA Orange
+    const LT = [238, 247, 240];    // #EEF7F0 Light Green Tint
+    const LO = [254, 244, 236];    // #FEF4EC Light Orange
+    const BGG = [188, 216, 194];   // #BCD8C2 Border Gray-Green
+    const CIBG = [255, 245, 102];  // Highlight Pen Yellow (#FFF566)
+    const CIBD = [230, 200, 0];    // Golden Yellow Border (#E6C800)
+    const DK = [51, 51, 51];       // #333333 Dark Text
+    const MUT = [119, 119, 119];   // #777777 Gray
+    const WHT = [255, 255, 255];   // #FFFFFF White
+    const BLK = [17, 17, 17];      // #111111
+
+    const allPnrs = resolveAllPnrs(data);
+    const pnr = allPnrs.length > 0 ? allPnrs.join(' / ') : ((data.pnr || data.bookingNo || 'EVA01').trim().toUpperCase());
+    const isSample = /sample/i.test(pnr) || /sample/i.test(data.bookingNo || '') || /sample/i.test(data.passengerName || '') || data.isSample;
+    const issuedDate = data.issuedDate || formatTicketDate(new Date());
+    const paxList = (data.passengers && data.passengers.length > 0)
+        ? data.passengers
+        : [{ name: data.passengerName || 'SAMPLE PASSENGER', type: data.passengerType || 'Adult', eticket: data.eTicketNo || '', passport: '', expiry: '' }];
+    const paxSummary = paxList.length === 1 ? `1 ${paxList[0].type || 'Adult'}` : `${paxList.length} Adults`;
+
+    const flights = (data.flights && data.flights.length > 0)
+        ? data.flights
+        : [{
+            flightNo: data.flightNo || 'BR 001',
+            airlineName: data.airlineName || 'EVA Air',
+            depTime: data.depTime || '09:25',
+            depDateFormatted: data.depDateFormatted || 'Sunday, 1 November 2026',
+            depAirport: data.depAirport || 'Taipei - Taoyuan (TPE)',
+            depTerminal: data.depTerminal || 'Terminal 2',
+            arrTime: data.arrTime || '13:05',
+            arrDateFormatted: data.arrDateFormatted || 'Sunday, 1 November 2026',
+            arrAirport: data.arrAirport || 'Bangkok - Suvarnabhumi (BKK)',
+            arrTerminal: data.arrTerminal || '',
+            duration: data.duration || '3h 40min, Non-Stop',
+            aircraft: data.aircraft || 'Boeing 787-10',
+            flightClass: data.flightClass || 'Economy (Y)',
+            route: data.route || 'TPE - BKK'
+        }];
+
+    const firstFlight = flights[0];
+    const depCity = extractCityName(firstFlight.depAirport) || 'Taipei';
+    const arrCity = extractCityName(firstFlight.arrAirport) || 'Bangkok';
+
+    // 1. HEADER
+    if (logoDataUrl) {
+        try {
+            // ~62mm wide = ~165-175 pt wide, cropped transparent PNG with natural 4.41:1 ratio
+            const logoW = 165;
+            const logoH = logoW / 4.414; // ~37.4 pt
+            doc.addImage(logoDataUrl, 'PNG', marginL, 66, logoW, logoH, undefined, 'FAST');
+        } catch (e) {
+            console.warn("Logo add error:", e);
+        }
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(...EVAG);
+    doc.text("BOOKING CONFIRMATION", rightEdge, 68, { align: "right" });
+
+    if (isSample) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(211, 47, 47);
+        doc.text("SAMPLE — not a valid ticket", rightEdge, 79, { align: "right" });
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...DK);
+        doc.text("EVA Air (BR)", rightEdge, 90, { align: "right" });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...EVAG);
+        doc.text(`Booking Ref: ${pnr}`, rightEdge, 106, { align: "right" });
+    } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...DK);
+        doc.text("EVA Air (BR)", rightEdge, 84, { align: "right" });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...EVAG);
+        doc.text(`Booking Ref: ${pnr}`, rightEdge, 102, { align: "right" });
+    }
+
+    // Full-width orange rule below header (1mm = 2.83pt)
+    doc.setDrawColor(...EVAO);
+    doc.setLineWidth(2.83);
+    doc.line(marginL, 122.4, rightEdge, 122.4);
+
+    // 2. BOOKING STRIP (2 rows x 6 columns)
+    const stripY = 137.5;
+    const stripH = 58.5;
+    doc.setFillColor(...LT);
+    doc.rect(marginL, stripY, textW, stripH, 'F');
+    doc.setDrawColor(...BGG);
+    doc.setLineWidth(0.5);
+    doc.rect(marginL, stripY, textW, stripH, 'S');
+
+    // Horizontal inner divider
+    doc.line(marginL, stripY + 29.25, rightEdge, stripY + 29.25);
+
+    // Column offsets
+    const c0 = marginL;          // 42.5
+    const c1 = marginL + 71.0;   // 113.5
+    const c2 = c1 + 113.3;       // 226.8
+    const c3 = c2 + 71.0;        // 297.8
+    const c4 = c3 + 113.3;       // 411.1
+    const c5 = c4 + 62.4;        // 473.5
+    const cLines = [c1, c2, c3, c4, c5];
+    cLines.forEach(cx => {
+        doc.line(cx, stripY, cx, stripY + stripH);
+    });
+
+    // Strip Row 1
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...DK);
+    doc.text("Booking Ref", c0 + 5, stripY + 18.0);
+
+    doc.setFontSize(12);
+    doc.setTextColor(...BLK);
+    doc.text(pnr, c1 + 5, stripY + 18.0, { maxWidth: 103 });
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Issued Date", c2 + 5, stripY + 18.0);
+    doc.setFont("helvetica", "normal");
+    doc.text(issuedDate, c3 + 5, stripY + 18.0, { maxWidth: 103 });
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Passengers", c4 + 5, stripY + 18.0);
+    doc.setFont("helvetica", "normal");
+    doc.text(paxSummary, c5 + 5, stripY + 18.0, { maxWidth: 70 });
+
+    // Strip Row 2 (Highlighted Check-in)
+    const sectorCheckins = getSectorCheckinList(data).slice(0, 2);
+    const isMultiSector = sectorCheckins.length > 1;
+
+    if (isMultiSector) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.6);
+        doc.setTextColor(...DK);
+        doc.text(sectorCheckins[0].label, c0 + 5, stripY + 39.5, { maxWidth: 65 });
+        doc.text(sectorCheckins[1].label, c0 + 5, stripY + 52.0, { maxWidth: 65 });
+
+        sectorCheckins.forEach((sc, i) => {
+            const by = (i === 0) ? (stripY + 31.0) : (stripY + 44.5);
+            const baselineY = (i === 0) ? (stripY + 39.5) : (stripY + 52.0);
+
+            doc.setFont("helvetica", "bold");
+            let cFontSize = 7.2;
+            doc.setFontSize(cFontSize);
+            let tw = doc.getTextWidth(sc.time);
+            while (tw > 98 && cFontSize > 6.0) {
+                cFontSize -= 0.3;
+                doc.setFontSize(cFontSize);
+                tw = doc.getTextWidth(sc.time);
+            }
+            const bgW = Math.min(tw + 8, 106);
+            const bgH = 11.5;
+
+            doc.setFillColor(...CIBG);
+            doc.setDrawColor(...CIBD);
+            doc.setLineWidth(0.7);
+            doc.roundedRect(c1 + 4, by, bgW, bgH, 2, 2, 'FD');
+
+            doc.setTextColor(...BLK);
+            doc.text(sc.time, c1 + 8, baselineY);
+        });
+    } else {
+        const sc = sectorCheckins[0];
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...DK);
+        doc.text(sc.label, c0 + 5, stripY + 46.5, { maxWidth: 65 });
+
+        doc.setFont("helvetica", "bold");
+        let cFontSize = 8.0;
+        doc.setFontSize(cFontSize);
+        let tw = doc.getTextWidth(sc.time);
+        while (tw > 98 && cFontSize > 6.5) {
+            cFontSize -= 0.3;
+            doc.setFontSize(cFontSize);
+            tw = doc.getTextWidth(sc.time);
+        }
+        const bgW = Math.min(tw + 8, 106);
+        const bgH = 13.0;
+        const by = stripY + 37.5;
+        const baselineY = stripY + 46.5;
+
+        doc.setFillColor(...CIBG);
+        doc.setDrawColor(...CIBD);
+        doc.setLineWidth(0.7);
+        doc.roundedRect(c1 + 4, by, bgW, bgH, 2, 2, 'FD');
+
+        doc.setTextColor(...BLK);
+        doc.text(sc.time, c1 + 8, baselineY);
+    }
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Status", c2 + 5, stripY + 46.5);
+    doc.setTextColor(...BLK);
+    doc.text(isSample ? "Confirmed (Sample)" : "Confirmed", c3 + 5, stripY + 46.5);
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Alliance", c4 + 5, stripY + 46.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.8);
+    doc.text("Star\nAlliance", c5 + 5, stripY + 43.5);
+
+    // 3. FLIGHT DETAILS
+    let curY = stripY + stripH + 20;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...EVAG);
+    doc.text("Flight Details", marginL, curY);
+    curY += 8;
+
+    const numFlights = flights.length;
+    const cardTopH = numFlights > 1 ? 95 : 108;
+    const infoTableH = 40;
+
+    flights.forEach(f => {
+        const sDepCity = extractCityName(f.depAirport) || 'Taipei';
+        const sArrCity = extractCityName(f.arrAirport) || 'Bangkok';
+        let sArrAirport = f.arrAirport || '';
+        if (f.arrTerminal) sArrAirport += `, ${f.arrTerminal}`;
+        const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'TPE'} - ${lookupAirportCode(f.arrAirport) || 'BKK'}`;
+        const sFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'BR 001';
+
+        // Green Card Top Bar + Upper section
+        doc.setFillColor(...EVAG);
+        doc.roundedRect(marginL, curY, textW, cardTopH, 2, 2, 'F');
+
+        // Top bar text inside green card
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...WHT);
+        doc.text(sDepCity, marginL + 8, curY + 21);
+        const cityW = doc.getTextWidth(sDepCity);
+
+        // Vector arrow
+        const ax = marginL + 8 + cityW + 6;
+        const ay = curY + 16.5;
+        doc.setDrawColor(...WHT);
+        doc.setFillColor(...WHT);
+        doc.setLineWidth(1.4);
+        doc.line(ax, ay, ax + 9, ay);
+        doc.triangle(
+            ax + 7.5, ay - 2.5,
+            ax + 12.5, ay,
+            ax + 7.5, ay + 2.5,
+            'FD'
+        );
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...WHT);
+        doc.text(sArrCity, ax + 18, curY + 21);
+
+        const sectorPnr = f.pnr || pnr;
+        if (sectorPnr && sectorPnr !== pnr) {
+            const pnrBadgeText = `Booking Ref: ${sectorPnr}`;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            const badgeW = doc.getTextWidth(pnrBadgeText) + 10;
+            const badgeH = 14;
+            const badgeX = rightEdge - 8 - badgeW;
+            const badgeY = curY + 11;
+
+            doc.setFillColor(...EVAO); // Orange badge
+            doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 2, 2, 'F');
+            doc.setTextColor(...WHT); // White text on orange badge
+            doc.text(pnrBadgeText, badgeX + badgeW / 2, badgeY + 10, { align: "center" });
+
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...WHT);
+            doc.text(`${sFlightNo}  |  EVA Air`, badgeX - 8, curY + 21, { align: "right" });
+        } else {
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...WHT);
+            doc.text(`${sFlightNo}  |  EVA Air`, rightEdge - 8, curY + 21, { align: "right" });
+        }
+
+        // Times (Bold 15pt White)
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...WHT);
+        doc.text(f.depTime || "09:25", marginL + 8, curY + 50);
+        doc.text(f.arrTime || "13:05", marginL + 258, curY + 50);
+
+        // Dates (Light 8pt)
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(225, 245, 230);
+        doc.text(f.depDateFormatted || "Sunday, 1 November 2026", marginL + 8, curY + 72);
+        doc.text(f.arrDateFormatted || f.depDateFormatted || "Sunday, 1 November 2026", marginL + 258, curY + 72);
+
+        // Airports + Terminals
+        let depAirportFull = f.depAirport || "Taipei - Taoyuan (TPE)";
+        if (f.depTerminal) depAirportFull += `, ${f.depTerminal}`;
+        let arrAirportFull = sArrAirport || "Bangkok - Suvarnabhumi (BKK)";
+
+        doc.text(depAirportFull, marginL + 8, curY + 86, { maxWidth: 240 });
+        doc.text(arrAirportFull, marginL + 258, curY + 86, { maxWidth: 240 });
+
+        curY += cardTopH;
+
+        // Info table 2x4 with light-orange background and orange border
+        doc.setFillColor(...LO);
+        doc.rect(marginL, curY, textW, infoTableH, 'F');
+        doc.setDrawColor(...EVAO);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, infoTableH, 'S');
+
+        // Middle horizontal line
+        doc.line(marginL, curY + 20, rightEdge, curY + 20);
+
+        // Vertical columns
+        const colW = [70, 185, 70, 185.3];
+        const v1 = marginL + colW[0];
+        const v2 = v1 + colW[1];
+        const v3 = v2 + colW[2];
+        doc.line(v1, curY, v1, curY + infoTableH);
+        doc.line(v2, curY, v2, curY + infoTableH);
+        doc.line(v3, curY, v3, curY + infoTableH);
+
+        // Row 1
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...DK);
+        doc.text("Duration", marginL + 6, curY + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.duration || "3h 40min, Non-Stop", v1 + 6, curY + 13.5, { maxWidth: 175 });
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Aircraft", v2 + 6, curY + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.aircraft || "Boeing 787-10", v3 + 6, curY + 13.5, { maxWidth: 175 });
+
+        // Row 2
+        doc.setFont("helvetica", "bold");
+        doc.text("Class", marginL + 6, curY + 33.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.flightClass || "Economy (Y)", v1 + 6, curY + 33.5, { maxWidth: 175 });
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Route", v2 + 6, curY + 33.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(sRoute, v3 + 6, curY + 33.5, { maxWidth: 175 });
+
+        curY += infoTableH + 20;
+    });
+
+    // 4. PASSENGER DETAILS
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...EVAG);
+    doc.text("Passenger Details", marginL, curY);
+    curY += 8;
+
+    const paxHeaderH = 18.0;
+    const paxRowH = 20.0;
+    const paxCol1 = marginL;
+    const paxCol2 = marginL + 140;
+    const paxCol3 = marginL + 310;
+    const paxCol4 = marginL + 410;
+
+    // Table Header
+    doc.setFillColor(...EVAG);
+    doc.rect(marginL, curY, textW, paxHeaderH, 'F');
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...WHT);
+    doc.text("Name", paxCol1 + 6, curY + 12.5);
+    doc.text("E-Ticket No.", paxCol2 + 6, curY + 12.5);
+    doc.text("Type", paxCol3 + 6, curY + 12.5);
+    doc.text("Seat", paxCol4 + 6, curY + 12.5);
+
+    curY += paxHeaderH;
+
+    paxList.forEach((p, idx) => {
+        doc.setFillColor(...LT);
+        doc.rect(marginL, curY, textW, paxRowH, 'F');
+        doc.setDrawColor(...BGG);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, paxRowH, 'S');
+
+        doc.line(paxCol2, curY, paxCol2, curY + paxRowH);
+        doc.line(paxCol3, curY, paxCol3, curY + paxRowH);
+        doc.line(paxCol4, curY, paxCol4, curY + paxRowH);
+
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLK);
+        doc.text(p.name || "SAMPLE PASSENGER", marginL + 6, curY + 13.5, { maxWidth: 130 });
+
+        doc.setFont("helvetica", "normal");
+        doc.text(p.eticket || p.eTicketNo || data.eTicketNo || "To be advised at check-in", paxCol2 + 6, curY + 13.5, { maxWidth: 160 });
+        doc.text(p.type || "Adult", paxCol3 + 6, curY + 13.5, { maxWidth: 90 });
+        doc.text(p.seat || "—", paxCol4 + 6, curY + 13.5, { maxWidth: 90 });
+
+        curY += paxRowH;
+    });
+
+    curY += 20;
+
+    // 5. BAGGAGE ALLOWANCE
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...EVAG);
+    doc.text("Baggage Allowance", marginL, curY);
+    curY += 8;
+
+    const bagRowH = 22.0;
+    const totalBagH = bagRowH * paxList.length;
+    doc.setFillColor(...LO);
+    doc.rect(marginL, curY, textW, totalBagH, 'F');
+    doc.setDrawColor(...EVAO);
+    doc.setLineWidth(0.5);
+    doc.rect(marginL, curY, textW, totalBagH, 'S');
+
+    const bagSplit = marginL + 130;
+    doc.line(bagSplit, curY, bagSplit, curY + totalBagH);
+
+    paxList.forEach((p, idx) => {
+        const rowY = curY + (idx * bagRowH);
+        if (idx > 0) {
+            doc.line(marginL, rowY, rightEdge, rowY);
+        }
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLK);
+        doc.text(p.name || "SAMPLE PASSENGER", marginL + 6, rowY + 14.5, { maxWidth: 120 });
+
+        doc.setFont("helvetica", "normal");
+        const rawBag = p.baggage || data.checkedBaggage || "Checked: 30 kg   |   Carry-on: 7 kg";
+        const bagInfo = formatCheckedBaggageLine(rawBag);
+        doc.text(bagInfo, bagSplit + 6, rowY + 14.5, { maxWidth: 360 });
+    });
+
+    curY += totalBagH + 20;
+
+    // 6. NOTES
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...EVAG);
+    doc.text("Notes", marginL, curY);
+    curY += 12;
+
+    const notesBullets = [];
+    if (isSample) {
+        notesBullets.push("•  This is a SAMPLE template for layout demonstration only — not a valid ticket or booking confirmation.");
+    }
+    notesBullets.push(
+        "•  Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or itinerary may also be required.",
+        "•  Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.",
+        "•  Please arrive at the airport at least 3 hours before departure to allow enough time for check-in."
+    );
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...DK);
+
+    notesBullets.forEach(b => {
+        const lines = doc.splitTextToSize(b, textW - 8);
+        doc.text(lines, marginL + 4, curY);
+        curY += (lines.length * 10) + 2;
+    });
+
+    curY += 6;
+
+    // 7. FOOTER: thin orange rule (0.6mm = 1.7pt)
+    doc.setDrawColor(...EVAO);
+    doc.setLineWidth(1.7);
+    doc.line(marginL, curY, rightEdge, curY);
+    curY += 14;
+
+    // Centered 8pt gray footer
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MUT);
+    const depDateShort = firstFlight.depDateFormatted ? firstFlight.depDateFormatted.replace(/^[A-Za-z]+day,\s*/, '').toUpperCase() : '1 NOV 2026';
+    const footerMsg = isSample
+        ? `evaair.com   |   SAMPLE TEMPLATE — not a valid ticket`
+        : `evaair.com   |   Booking Ref ${pnr}   |   ${firstFlight.flightNo || 'BR 001'} ${depCity} - ${arrCity}, ${depDateShort}`;
+    doc.text(footerMsg, 595.28 / 2, curY, { align: "center" });
+
+    return doc;
+}
+
+/**
+ * Generate native vector jsPDF document for Singapore Airlines matching official template
+ * Brand tokens:
+ * Primary (SQ blue): #1B3A6B [27, 58, 107]
+ * Accent (SQ gold): #E8A90C [232, 169, 12]
+ * Light tint: #F2F5FA [242, 245, 250]
+ * Light gold: #FDF8EC [253, 248, 236]
+ * Border blue-gray: #B9C6DD [185, 198, 221]
+ * Border gold: #E8A90C [232, 169, 12]
+ * Check-in highlight tint: #EBF2FC [235, 242, 252] (border: #9CB8E2, text: #1B3A6B)
+ */
+export async function generateSingaporeAirlinesPdfDoc(data) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+
+    const logoDataUrl = await getAirlineLogoDataUrl('Singapore Airlines');
+
+    const marginL = 42.5;
+    const rightEdge = 552.8;
+    const textW = rightEdge - marginL; // 510.3 pt
+
+    const SQB = [27, 58, 107];     // #1B3A6B SQ Blue
+    const SQG = [232, 169, 12];    // #E8A90C SQ Gold
+    const LT = [242, 245, 250];    // #F2F5FA Light Blue Tint
+    const LG = [253, 248, 236];    // #FDF8EC Light Gold
+    const BBG = [185, 198, 221];   // #B9C6DD Blue-gray border
+    const CIBG = [255, 245, 102];  // Highlight Pen Yellow (#FFF566)
+    const CIBD = [230, 200, 0];    // Golden Yellow Border (#E6C800)
+    const DK = [51, 51, 51];       // #333333 Dark Text
+    const MUT = [136, 136, 136];   // #888888 Gray
+    const WHT = [255, 255, 255];   // #FFFFFF White
+    const BLK = [17, 17, 17];      // #111111
+
+    const allPnrs = resolveAllPnrs(data);
+    const pnr = allPnrs.length > 0 ? allPnrs.join(' / ') : ((data.pnr || data.bookingNo || 'SMPL01').trim().toUpperCase());
+    const issuedDate = data.issuedDate || formatTicketDate(new Date());
+    const paxList = (data.passengers && data.passengers.length > 0)
+        ? data.passengers
+        : [{ name: data.passengerName || 'SAMPLE PASSENGER', type: data.passengerType || 'Adult', eticket: data.eTicketNo || '', passport: '', expiry: '' }];
+    const paxSummary = paxList.length === 1 ? `1 ${paxList[0].type || 'Adult'}` : `${paxList.length} Adults`;
+
+    const flights = (data.flights && data.flights.length > 0)
+        ? data.flights
+        : [{
+            flightNo: data.flightNo || 'SQ 001',
+            airlineName: data.airlineName || 'Singapore Airlines',
+            depTime: data.depTime || '09:00',
+            depDateFormatted: data.depDateFormatted || 'Saturday, 1 November 2026',
+            depAirport: data.depAirport || 'Singapore - Changi (SIN)',
+            depTerminal: data.depTerminal || 'Terminal 3',
+            arrTime: data.arrTime || '15:30',
+            arrDateFormatted: data.arrDateFormatted || 'Saturday, 1 November 2026',
+            arrAirport: data.arrAirport || 'London - Heathrow (LHR)',
+            arrTerminal: data.arrTerminal || 'Terminal 2',
+            duration: data.duration || '13h 30min, Non-Stop',
+            aircraft: data.aircraft || 'Airbus A380-800',
+            flightClass: data.flightClass || 'Economy (S)',
+            route: data.route || 'SIN - LHR'
+        }];
+
+    const firstFlight = flights[0];
+    const depCity = extractCityName(firstFlight.depAirport) || 'Singapore';
+    const arrCity = extractCityName(firstFlight.arrAirport) || 'London';
+
+    // 1. HEADER
+    if (logoDataUrl) {
+        try {
+            // ~62mm wide = ~175 pt wide, cropped transparent PNG with natural 2.7:1 ratio
+            const logoW = 165;
+            const logoH = logoW / 2.72; // ~60.6 pt
+            doc.addImage(logoDataUrl, 'PNG', marginL, 56, logoW, logoH, undefined, 'FAST');
+        } catch (e) {
+            console.warn("Logo add error:", e);
+        }
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(...SQB);
+    doc.text("BOOKING CONFIRMATION", rightEdge, 70, { align: "right" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...DK);
+    doc.text("Singapore Airlines (SQ)", rightEdge, 86, { align: "right" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(...SQB);
+    doc.text(`Booking Ref: ${pnr}`, rightEdge, 104, { align: "right" });
+
+    // Gold Rule below header (1mm = 2.83pt)
+    doc.setDrawColor(...SQG);
+    doc.setLineWidth(2.83);
+    doc.line(marginL, 122.4, rightEdge, 122.4);
+
+    // 2. BOOKING STRIP
+    const stripY = 137.5;
+    const stripH = 58.5;
+    doc.setFillColor(...LT);
+    doc.rect(marginL, stripY, textW, stripH, 'F');
+    doc.setDrawColor(...BBG);
+    doc.setLineWidth(0.5);
+    doc.rect(marginL, stripY, textW, stripH, 'S');
+
+    // Horizontal divider
+    doc.line(marginL, stripY + 23.5, rightEdge, stripY + 23.5);
+    // Vertical dividers: matches 180mm table proportions
+    const sCols = [127.6, 240.9, 326.0, 439.4, 501.7];
+    sCols.forEach(x => doc.line(x, stripY, x, stripY + stripH));
+
+    // Strip Row 1
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Booking Ref", marginL + 5, stripY + 15.5);
+    const pnrFontSize = pnr.length > 10 ? 8.0 : (pnr.length > 7 ? 8.5 : 9.5);
+    doc.setFontSize(pnrFontSize);
+    doc.setTextColor(...BLK);
+    doc.text(pnr, 127.6 + 5, stripY + 15.5, { maxWidth: 103 });
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Issued Date", 240.9 + 5, stripY + 15.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(issuedDate, 326.0 + 5, stripY + 15.5, { maxWidth: 80 });
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Passengers", 439.4 + 5, stripY + 15.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(paxSummary, 501.7 + 5, stripY + 15.5, { maxWidth: 40 });
+
+    // Strip Row 2 (Prominent Highlighted Check-in Time)
+    const sectorCheckins = getSectorCheckinList(data).slice(0, 2);
+    const isMultiSector = sectorCheckins.length > 1;
+
+    if (isMultiSector) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.6);
+        doc.setTextColor(...DK);
+        doc.text(sectorCheckins[0].label, marginL + 5, stripY + 33.5, { maxWidth: 72 });
+        doc.text(sectorCheckins[1].label, marginL + 5, stripY + 48.0, { maxWidth: 72 });
+
+        sectorCheckins.forEach((sc, i) => {
+            const by = (i === 0) ? (stripY + 25.0) : (stripY + 39.5);
+            const baselineY = (i === 0) ? (stripY + 33.5) : (stripY + 48.0);
+            
+            doc.setFont("helvetica", "bold");
+            let cFontSize = 7.2;
+            doc.setFontSize(cFontSize);
+            let tw = doc.getTextWidth(sc.time);
+            while (tw > 98 && cFontSize > 6.0) {
+                cFontSize -= 0.3;
+                doc.setFontSize(cFontSize);
+                tw = doc.getTextWidth(sc.time);
+            }
+            const bgW = Math.min(tw + 8, 106);
+            const bgH = 11.5;
+
+            // Highlighted Badge with clear contrast
+            doc.setFillColor(...CIBG);
+            doc.setDrawColor(...CIBD);
+            doc.setLineWidth(0.7);
+            doc.roundedRect(127.6 + 4, by, bgW, bgH, 2, 2, 'FD');
+
+            doc.setTextColor(...BLK);
+            doc.text(sc.time, 127.6 + 8, baselineY);
+        });
+    } else {
+        const sc = sectorCheckins[0];
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...DK);
+        doc.text(sc.label, marginL + 5, stripY + 42.0, { maxWidth: 72 });
+
+        doc.setFont("helvetica", "bold");
+        let cFontSize = 8.0;
+        doc.setFontSize(cFontSize);
+        let tw = doc.getTextWidth(sc.time);
+        while (tw > 98 && cFontSize > 6.5) {
+            cFontSize -= 0.3;
+            doc.setFontSize(cFontSize);
+            tw = doc.getTextWidth(sc.time);
+        }
+        const bgW = Math.min(tw + 8, 106);
+        const bgH = 13.0;
+        const by = stripY + 33.0;
+        const baselineY = stripY + 42.0;
+
+        doc.setFillColor(...CIBG);
+        doc.setDrawColor(...CIBD);
+        doc.setLineWidth(0.7);
+        doc.roundedRect(127.6 + 4, by, bgW, bgH, 2, 2, 'FD');
+
+        doc.setTextColor(...BLK);
+        doc.text(sc.time, 127.6 + 8, baselineY);
+    }
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Status", 240.9 + 5, stripY + 42.0);
+    doc.setTextColor(...BLK);
+    doc.text("Confirmed", 326.0 + 5, stripY + 42.0);
+
+    doc.setTextColor(...DK);
+    doc.text("Alliance", 439.4 + 5, stripY + 42.0);
+    doc.setFont("helvetica", "normal");
+    doc.text("Star Alliance", 501.7 + 5, stripY + 42.0, { maxWidth: 45 });
+
+    // 3. FLIGHT DETAILS
+    let curY = stripY + stripH + 20;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SQB);
+    doc.text("Flight Details", marginL, curY);
+    curY += 8;
+
+    const numFlights = flights.length;
+    const isMultiFlight = numFlights > 1;
+
+    flights.forEach((f) => {
+        const sDepCity = extractCityName(f.depAirport) || 'Singapore';
+        const sArrCity = extractCityName(f.arrAirport) || 'London';
+        const sFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'SQ 001';
+
+        // Upper Blue Card
+        const upperBoxH = isMultiFlight ? 100 : 110;
+        doc.setFillColor(...SQB);
+        doc.rect(marginL, curY, textW, upperBoxH, 'F');
+        doc.setDrawColor(...BBG);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, upperBoxH, 'S');
+
+        // Top line inside Blue Card: Origin ➔ Destination
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...WHT);
+        doc.text(sDepCity, marginL + 8, curY + 21);
+        const cityW = doc.getTextWidth(sDepCity);
+
+        // Elegant vector right-arrow
+        const ax = marginL + 8 + cityW + 6;
+        const ay = curY + 16.5;
+        doc.setDrawColor(...WHT);
+        doc.setFillColor(...WHT);
+        doc.setLineWidth(1.4);
+        doc.line(ax, ay, ax + 9, ay);
+        doc.triangle(
+            ax + 7.5, ay - 2.5,
+            ax + 12.5, ay,
+            ax + 7.5, ay + 2.5,
+            'FD'
+        );
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...WHT);
+        doc.text(sArrCity, ax + 18, curY + 21);
+
+        const sectorPnr = f.pnr || pnr;
+
+        if (sectorPnr && sectorPnr !== pnr) {
+            const pnrBadgeText = `Booking Ref: ${sectorPnr}`;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            const badgeW = doc.getTextWidth(pnrBadgeText) + 10;
+            const badgeH = 14;
+            const badgeX = rightEdge - 8 - badgeW;
+            const badgeY = curY + 11;
+
+            doc.setFillColor(...SQG); // Gold badge
+            doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 2, 2, 'F');
+            doc.setTextColor(...SQB); // SQ Blue text
+            doc.text(pnrBadgeText, badgeX + badgeW / 2, badgeY + 10, { align: "center" });
+
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...WHT);
+            doc.text(`${sFlightNo}  |  Singapore Airlines`, badgeX - 8, curY + 21, { align: "right" });
+        } else {
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...WHT);
+            doc.text(`${sFlightNo}  |  Singapore Airlines`, rightEdge - 8, curY + 21, { align: "right" });
+        }
+
+        // Times (Bold 15pt White)
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...WHT);
+        doc.text(f.depTime || "09:00", marginL + 8, curY + 50);
+        doc.text(f.arrTime || "15:30", marginL + 258, curY + 50);
+
+        // Dates (Light 8pt)
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(225, 235, 250);
+        doc.text(f.depDateFormatted || "Saturday, 1 November 2026", marginL + 8, curY + 72);
+        doc.text(f.arrDateFormatted || "Saturday, 1 November 2026", marginL + 258, curY + 72);
+
+        // Airports + Terminals (Light 8pt)
+        const depAirStr = `${f.depAirport || 'Singapore - Changi (SIN)'}${f.depTerminal ? ', ' + f.depTerminal : ''}`;
+        const arrAirStr = `${f.arrAirport || 'London - Heathrow (LHR)'}${f.arrTerminal ? ', ' + f.arrTerminal : ''}`;
+        doc.text(depAirStr, marginL + 8, curY + 92);
+        doc.text(arrAirStr, marginL + 258, curY + 92);
+
+        curY += upperBoxH;
+
+        // 2x4 Info Table (Duration | Aircraft / Class | Route) with Light-gold background and gold borders
+        const infoRowH = 20.0;
+        const lowerBoxH = infoRowH * 2;
+        doc.setFillColor(...LG);
+        doc.rect(marginL, curY, textW, lowerBoxH, 'F');
+        doc.setDrawColor(...SQG);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, lowerBoxH, 'S');
+
+        // Horizontal divider
+        doc.line(marginL, curY + infoRowH, rightEdge, curY + infoRowH);
+        // Vertical dividers: 121.9, 297.6, 377.0
+        [121.9, 297.6, 377.0].forEach(x => doc.line(x, curY, x, curY + lowerBoxH));
+
+        // Info Row 1: Duration | Aircraft
+        doc.setTextColor(...DK);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.text("Duration", marginL + 6, curY + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.duration || "13h 30min, Non-Stop", 121.9 + 6, curY + 13.5, { maxWidth: 160 });
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Aircraft", 297.6 + 6, curY + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.aircraft || "Airbus A380-800", 377.0 + 6, curY + 13.5, { maxWidth: 160 });
+
+        // Info Row 2: Class | Route
+        const r2Y = curY + infoRowH;
+        doc.setFont("helvetica", "bold");
+        doc.text("Class", marginL + 6, r2Y + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.flightClass || data.flightClass || "Economy (S)", 121.9 + 6, r2Y + 13.5, { maxWidth: 160 });
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Route", 297.6 + 6, r2Y + 13.5);
+        doc.setFont("helvetica", "normal");
+        const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'LHR'}`;
+        doc.text(sRoute, 377.0 + 6, r2Y + 13.5, { maxWidth: 160 });
+
+        curY += lowerBoxH + 20;
+    });
+
+    // 4. PASSENGER DETAILS
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SQB);
+    doc.text("Passenger Details", marginL, curY);
+    curY += 8;
+
+    const paxHeaderH = 22.0;
+    doc.setFillColor(...SQB);
+    doc.rect(marginL, curY, textW, paxHeaderH, 'F');
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...WHT);
+
+    // Columns: Name | E-Ticket No. | Type | Seat
+    const paxCol2 = marginL + 155;
+    const paxCol3 = marginL + 310;
+    const paxCol4 = marginL + 415;
+    doc.text("Name", marginL + 6, curY + 14.5);
+    doc.text("E-Ticket No.", paxCol2 + 6, curY + 14.5);
+    doc.text("Type", paxCol3 + 6, curY + 14.5);
+    doc.text("Seat", paxCol4 + 6, curY + 14.5);
+    curY += paxHeaderH;
+
+    const paxRowH = 22.0;
+    paxList.forEach((p, idx) => {
+        const bg = (idx % 2 === 0) ? LT : [255, 255, 255];
+        doc.setFillColor(...bg);
+        doc.rect(marginL, curY, textW, paxRowH, 'F');
+        doc.setDrawColor(...BBG);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, paxRowH, 'S');
+
+        [paxCol2, paxCol3, paxCol4].forEach(x => doc.line(x, curY, x, curY + paxRowH));
+
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLK);
+        doc.text(p.name || "SAMPLE PASSENGER", marginL + 6, curY + 14.5, { maxWidth: 145 });
+
+        doc.setFont("helvetica", "normal");
+        doc.text(p.eticket || p.eTicketNo || data.eTicketNo || "To be advised at check-in", paxCol2 + 6, curY + 14.5, { maxWidth: 145 });
+        doc.text(p.type || "Adult", paxCol3 + 6, curY + 14.5, { maxWidth: 95 });
+        doc.text(p.seat || "—", paxCol4 + 6, curY + 14.5, { maxWidth: 75 });
+
+        curY += paxRowH;
+    });
+
+    curY += 20;
+
+    // 5. BAGGAGE ALLOWANCE
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SQB);
+    doc.text("Baggage Allowance", marginL, curY);
+    curY += 8;
+
+    const bagRowH = 22.0;
+    const totalBagH = bagRowH * paxList.length;
+    doc.setFillColor(...LG);
+    doc.rect(marginL, curY, textW, totalBagH, 'F');
+    doc.setDrawColor(...SQG);
+    doc.setLineWidth(0.5);
+    doc.rect(marginL, curY, textW, totalBagH, 'S');
+
+    // Vertical divider at marginL + 130
+    const bagSplit = marginL + 130;
+    doc.line(bagSplit, curY, bagSplit, curY + totalBagH);
+
+    paxList.forEach((p, idx) => {
+        const rowY = curY + (idx * bagRowH);
+        if (idx > 0) {
+            doc.line(marginL, rowY, rightEdge, rowY);
+        }
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLK);
+        doc.text(p.name || "SAMPLE PASSENGER", marginL + 6, rowY + 14.5, { maxWidth: 120 });
+
+        doc.setFont("helvetica", "normal");
+        const bagInfo = p.baggage || data.checkedBaggage || "Checked: 30 kg   |   Carry-on: 7 kg";
+        doc.text(bagInfo, bagSplit + 6, rowY + 14.5, { maxWidth: 350 });
+    });
+
+    curY += totalBagH + 20;
+
+    // 6. NOTES
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SQB);
+    doc.text("Notes", marginL, curY);
+    curY += 12;
+
+    const notesBullets = [
+        "•  Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or itinerary may also be required.",
+        "•  Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.",
+        "•  Please arrive at the airport at least 3 hours before departure to allow enough time for check-in."
+    ];
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...DK);
+
+    notesBullets.forEach(b => {
+        const lines = doc.splitTextToSize(b, textW - 8);
+        doc.text(lines, marginL + 4, curY);
+        curY += (lines.length * 10) + 2;
+    });
+
+    curY += 6;
+
+    // 7. FOOTER: thin gold rule (0.6mm = 1.7pt)
+    doc.setDrawColor(...SQG);
+    doc.setLineWidth(1.7);
+    doc.line(marginL, curY, rightEdge, curY);
+    curY += 14;
+
+    // Centered 8pt gray footer
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MUT);
+    const depDateShort = firstFlight.depDateFormatted ? firstFlight.depDateFormatted.replace(/^[A-Za-z]+day,\s*/, '').toUpperCase() : '1 NOV 2026';
+    const footerMsg = `singaporeair.com   |   Booking Ref ${pnr}   |   ${firstFlight.flightNo || 'SQ 001'} ${depCity} - ${arrCity}, ${depDateShort}`;
+    doc.text(footerMsg, 595.28 / 2, curY, { align: "center" });
+
+    return doc;
+}
+
+/**
+ * Generate native vector jsPDF document for Scoot matching official template
+ * Brand tokens:
+ * Primary (Scoot yellow): #FFE900 [255, 233, 0]
+ * Dark (near-black): #1D1D1B [29, 29, 27]
+ * Light tint: #FFFBEA [255, 251, 234]
+ * Border tan: #D8D0A8 [216, 208, 168]
+ * Check-in highlight tint: #FFF566 [255, 245, 102] (border: #E6C800, text: #111111)
+ * Dark text: #333333 [51, 51, 51]
+ */
+export async function generateScootPdfDoc(data) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+
+    const logoDataUrl = await getAirlineLogoDataUrl('Scoot');
+
+    const marginL = 42.5;
+    const rightEdge = 552.8;
+    const textW = rightEdge - marginL; // 510.3 pt (180mm)
+
+    const SCY = [255, 233, 0];    // #FFE900 Scoot Yellow
+    const SCD = [29, 29, 27];      // #1D1D1B Scoot Near-Black
+    const LT = [255, 251, 234];    // #FFFBEA Light Yellow Tint
+    const BDT = [216, 208, 168];   // #D8D0A8 Border Tan
+    const CIBG = [255, 245, 102];  // Highlight Pen Yellow (#FFF566)
+    const CIBD = [230, 200, 0];    // Golden Yellow Border (#E6C800)
+    const DK = [51, 51, 51];       // #333333 Dark Text
+    const MUT = [119, 119, 119];   // #777777 Gray
+    const WHT = [255, 255, 255];   // #FFFFFF White
+    const BLK = [17, 17, 17];      // #111111
+
+    const allPnrs = resolveAllPnrs(data);
+    const pnr = allPnrs.length > 0 ? allPnrs.join(' / ') : ((data.pnr || data.bookingNo || 'TR001').trim().toUpperCase());
+    const isSample = /sample/i.test(pnr) || /sample/i.test(data.bookingNo || '') || /sample/i.test(data.passengerName || '') || data.isSample;
+    const issuedDate = data.issuedDate || formatTicketDate(new Date());
+    const paxList = (data.passengers && data.passengers.length > 0)
+        ? data.passengers
+        : [{ name: data.passengerName || 'SAMPLE PASSENGER', type: data.passengerType || 'Adult', eticket: data.eTicketNo || '', passport: '', expiry: '' }];
+    const paxSummary = paxList.length === 1 ? `1 ${paxList[0].type || 'Adult'}` : `${paxList.length} Adults`;
+
+    const flights = (data.flights && data.flights.length > 0)
+        ? data.flights
+        : [{
+            flightNo: data.flightNo || 'TR 001',
+            airlineName: data.airlineName || 'Scoot',
+            depTime: data.depTime || '10:00',
+            depDateFormatted: data.depDateFormatted || 'Sunday, 1 November 2026',
+            depAirport: data.depAirport || 'Singapore - Changi (SIN)',
+            depTerminal: data.depTerminal || 'Terminal 1',
+            arrTime: data.arrTime || '11:30',
+            arrDateFormatted: data.arrDateFormatted || 'Sunday, 1 November 2026',
+            arrAirport: data.arrAirport || 'Bangkok - Don Mueang (DMK)',
+            arrTerminal: data.arrTerminal || 'Terminal 1',
+            duration: data.duration || '2h 30min, Non-Stop',
+            aircraft: data.aircraft || 'Airbus A320neo',
+            flightClass: data.flightClass || 'Economy (Fly)',
+            route: data.route || 'SIN - DMK'
+        }];
+
+    const firstFlight = flights[0];
+    const depCity = extractCityName(firstFlight.depAirport) || 'Singapore';
+    const arrCity = extractCityName(firstFlight.arrAirport) || 'Bangkok';
+
+    // 1. HEADER
+    if (logoDataUrl) {
+        try {
+            // ~44mm wide = ~124.7 pt wide, natural circle badge ratio 476x420 = 1.133:1
+            const logoW = 124.7;
+            const logoH = 110.1;
+            doc.addImage(logoDataUrl, 'PNG', 48.5, 37.35, logoW, logoH, undefined, 'FAST');
+        } catch (e) {
+            console.warn("Scoot logo add error:", e);
+        }
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(...SCD);
+    doc.text("BOOKING CONFIRMATION", rightEdge, 68, { align: "right" });
+
+    if (isSample) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(211, 47, 47);
+        doc.text("SAMPLE — not a valid ticket", rightEdge, 79, { align: "right" });
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...DK);
+        doc.text("Scoot (TR)", rightEdge, 90, { align: "right" });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...SCD);
+        doc.text(`Booking Ref: ${pnr}`, rightEdge, 106, { align: "right" });
+    } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...DK);
+        doc.text("Scoot (TR)", rightEdge, 84, { align: "right" });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...SCD);
+        doc.text(`Booking Ref: ${pnr}`, rightEdge, 102, { align: "right" });
+    }
+
+    // Full-width yellow rule below header (1mm = 2.83pt)
+    doc.setDrawColor(...SCY);
+    doc.setLineWidth(2.83);
+    doc.line(marginL, 158.0, rightEdge, 158.0);
+
+    // 2. BOOKING STRIP (2 rows x 6 columns)
+    const stripY = 172.0;
+    const stripH = 58.5;
+    doc.setFillColor(...LT);
+    doc.rect(marginL, stripY, textW, stripH, 'F');
+    doc.setDrawColor(...BDT);
+    doc.setLineWidth(0.5);
+    doc.rect(marginL, stripY, textW, stripH, 'S');
+
+    // Horizontal inner divider
+    doc.line(marginL, stripY + 29.25, rightEdge, stripY + 29.25);
+
+    // Column offsets
+    const c0 = marginL;          // 42.5
+    const c1 = marginL + 85.1;   // 127.6
+    const c2 = c1 + 113.3;       // 240.9
+    const c3 = c2 + 85.1;        // 326.0
+    const c4 = c3 + 113.4;       // 439.4
+    const c5 = c4 + 62.3;        // 501.7
+    const cLines = [c1, c2, c3, c4, c5];
+    cLines.forEach(cx => {
+        doc.line(cx, stripY, cx, stripY + stripH);
+    });
+
+    // Strip Row 1
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...DK);
+    doc.text("Booking Ref", c0 + 5, stripY + 18.0);
+
+    doc.setFontSize(12);
+    doc.setTextColor(...BLK);
+    doc.text(pnr, c1 + 5, stripY + 18.0, { maxWidth: 103 });
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Issued Date", c2 + 5, stripY + 18.0);
+    doc.setFont("helvetica", "normal");
+    doc.text(issuedDate, c3 + 5, stripY + 18.0, { maxWidth: 103 });
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Passengers", c4 + 5, stripY + 18.0);
+    doc.setFont("helvetica", "normal");
+    doc.text(paxSummary, c5 + 5, stripY + 18.0, { maxWidth: 45 });
+
+    // Strip Row 2 (Highlighted Check-in)
+    const sectorCheckins = getSectorCheckinList(data).slice(0, 2);
+    const isMultiSector = sectorCheckins.length > 1;
+
+    if (isMultiSector) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.6);
+        doc.setTextColor(...DK);
+        doc.text(sectorCheckins[0].label, c0 + 5, stripY + 39.5, { maxWidth: 78 });
+        doc.text(sectorCheckins[1].label, c0 + 5, stripY + 52.0, { maxWidth: 78 });
+
+        sectorCheckins.forEach((sc, i) => {
+            const by = (i === 0) ? (stripY + 31.0) : (stripY + 44.5);
+            const baselineY = (i === 0) ? (stripY + 39.5) : (stripY + 52.0);
+
+            doc.setFont("helvetica", "bold");
+            let cFontSize = 7.2;
+            doc.setFontSize(cFontSize);
+            let tw = doc.getTextWidth(sc.time);
+            while (tw > 98 && cFontSize > 6.0) {
+                cFontSize -= 0.3;
+                doc.setFontSize(cFontSize);
+                tw = doc.getTextWidth(sc.time);
+            }
+            const bgW = Math.min(tw + 8, 106);
+            const bgH = 11.5;
+
+            doc.setFillColor(...CIBG);
+            doc.setDrawColor(...CIBD);
+            doc.setLineWidth(0.7);
+            doc.roundedRect(c1 + 4, by, bgW, bgH, 2, 2, 'FD');
+
+            doc.setTextColor(...BLK);
+            doc.text(sc.time, c1 + 8, baselineY);
+        });
+    } else {
+        const sc = sectorCheckins[0];
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...DK);
+        doc.text(sc.label, c0 + 5, stripY + 46.5, { maxWidth: 78 });
+
+        doc.setFont("helvetica", "bold");
+        let cFontSize = 8.0;
+        doc.setFontSize(cFontSize);
+        let tw = doc.getTextWidth(sc.time);
+        while (tw > 98 && cFontSize > 6.5) {
+            cFontSize -= 0.3;
+            doc.setFontSize(cFontSize);
+            tw = doc.getTextWidth(sc.time);
+        }
+        const bgW = Math.min(tw + 8, 106);
+        const bgH = 13.0;
+        const by = stripY + 37.5;
+        const baselineY = stripY + 46.5;
+
+        doc.setFillColor(...CIBG);
+        doc.setDrawColor(...CIBD);
+        doc.setLineWidth(0.7);
+        doc.roundedRect(c1 + 4, by, bgW, bgH, 2, 2, 'FD');
+
+        doc.setTextColor(...BLK);
+        doc.text(sc.time, c1 + 8, baselineY);
+    }
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Status", c2 + 5, stripY + 46.5);
+    doc.setTextColor(...BLK);
+    doc.text(isSample ? "Confirmed (Sample)" : "Confirmed", c3 + 5, stripY + 46.5);
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...DK);
+    doc.text("Alliance", c4 + 5, stripY + 46.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    // Scoot is not in any alliance
+    doc.text("—", c5 + 5, stripY + 46.5);
+
+    // 3. FLIGHT DETAILS
+    let curY = stripY + stripH + 20;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SCD);
+    doc.text("Flight Details", marginL, curY);
+    curY += 8;
+
+    const numFlights = flights.length;
+    const cardTopH = numFlights > 1 ? 95 : 108;
+    const infoTableH = 40;
+
+    flights.forEach(f => {
+        const sDepCity = extractCityName(f.depAirport) || 'Singapore';
+        const sArrCity = extractCityName(f.arrAirport) || 'Bangkok';
+        let sArrAirport = f.arrAirport || '';
+        if (f.arrTerminal) sArrAirport += `, ${f.arrTerminal}`;
+        const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'DMK'}`;
+        const sFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'TR 001';
+
+        // Dark Card Top Bar + Upper section
+        doc.setFillColor(...SCD);
+        doc.roundedRect(marginL, curY, textW, cardTopH, 2, 2, 'F');
+
+        // Top bar text inside dark card
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...WHT);
+        doc.text(sDepCity, marginL + 8, curY + 21);
+        const cityW = doc.getTextWidth(sDepCity);
+
+        // Vector arrow
+        const ax = marginL + 8 + cityW + 6;
+        const ay = curY + 16.5;
+        doc.setDrawColor(...WHT);
+        doc.setFillColor(...WHT);
+        doc.setLineWidth(1.4);
+        doc.line(ax, ay, ax + 9, ay);
+        doc.triangle(
+            ax + 7.5, ay - 2.5,
+            ax + 12.5, ay,
+            ax + 7.5, ay + 2.5,
+            'FD'
+        );
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(...WHT);
+        doc.text(sArrCity, ax + 18, curY + 21);
+
+        const sectorPnr = f.pnr || pnr;
+        if (sectorPnr && sectorPnr !== pnr) {
+            const pnrBadgeText = `Booking Ref: ${sectorPnr}`;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            const badgeW = doc.getTextWidth(pnrBadgeText) + 10;
+            const badgeH = 14;
+            const badgeX = rightEdge - 8 - badgeW;
+            const badgeY = curY + 11;
+
+            doc.setFillColor(...SCY); // Scoot yellow badge
+            doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 2, 2, 'F');
+            doc.setTextColor(...SCD); // Dark text on yellow badge
+            doc.text(pnrBadgeText, badgeX + badgeW / 2, badgeY + 10, { align: "center" });
+
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...WHT);
+            doc.text(`${sFlightNo}  |  Scoot`, badgeX - 8, curY + 21, { align: "right" });
+        } else {
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(...WHT);
+            doc.text(`${sFlightNo}  |  Scoot`, rightEdge - 8, curY + 21, { align: "right" });
+        }
+
+        // Times (Bold 15pt White)
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...WHT);
+        doc.text(f.depTime || "10:00", marginL + 8, curY + 50);
+        doc.text(f.arrTime || "11:30", marginL + 258, curY + 50);
+
+        // Dates (Light 8pt)
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(230, 230, 230);
+        doc.text(f.depDateFormatted || "Sunday, 1 November 2026", marginL + 8, curY + 72);
+        doc.text(f.arrDateFormatted || f.depDateFormatted || "Sunday, 1 November 2026", marginL + 258, curY + 72);
+
+        // Airports + Terminals
+        let depAirportFull = f.depAirport || "Singapore - Changi (SIN)";
+        if (f.depTerminal) depAirportFull += `, ${f.depTerminal}`;
+        let arrAirportFull = sArrAirport || "Bangkok - Don Mueang (DMK)";
+
+        doc.text(depAirportFull, marginL + 8, curY + 86, { maxWidth: 240 });
+        doc.text(arrAirportFull, marginL + 258, curY + 86, { maxWidth: 240 });
+
+        curY += cardTopH;
+
+        // Info table 2x4 with light-yellow background and yellow border
+        doc.setFillColor(...LT);
+        doc.rect(marginL, curY, textW, infoTableH, 'F');
+        doc.setDrawColor(...SCY);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, infoTableH, 'S');
+
+        // Middle horizontal line
+        doc.line(marginL, curY + 20, rightEdge, curY + 20);
+
+        // Vertical columns
+        const colW = [70, 185, 70, 185.3];
+        const v1 = marginL + colW[0];
+        const v2 = v1 + colW[1];
+        const v3 = v2 + colW[2];
+        doc.line(v1, curY, v1, curY + infoTableH);
+        doc.line(v2, curY, v2, curY + infoTableH);
+        doc.line(v3, curY, v3, curY + infoTableH);
+
+        // Row 1
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...DK);
+        doc.text("Duration", marginL + 6, curY + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.duration || "2h 30min, Non-Stop", v1 + 6, curY + 13.5, { maxWidth: 175 });
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Aircraft", v2 + 6, curY + 13.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.aircraft || "Airbus A320neo", v3 + 6, curY + 13.5, { maxWidth: 175 });
+
+        // Row 2
+        doc.setFont("helvetica", "bold");
+        doc.text("Class", marginL + 6, curY + 33.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(f.flightClass || "Economy (Fly)", v1 + 6, curY + 33.5, { maxWidth: 175 });
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Route", v2 + 6, curY + 33.5);
+        doc.setFont("helvetica", "normal");
+        doc.text(sRoute, v3 + 6, curY + 33.5, { maxWidth: 175 });
+
+        curY += infoTableH + 20;
+    });
+
+    // 4. PASSENGER DETAILS
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SCD);
+    doc.text("Passenger Details", marginL, curY);
+    curY += 8;
+
+    const paxHeaderH = 18.0;
+    const paxRowH = 20.0;
+    const paxCol1 = marginL;
+    const paxCol2 = marginL + 140;
+    const paxCol3 = marginL + 310;
+    const paxCol4 = marginL + 410;
+
+    // Table Header
+    doc.setFillColor(...SCD);
+    doc.rect(marginL, curY, textW, paxHeaderH, 'F');
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...WHT);
+    doc.text("Name", paxCol1 + 6, curY + 12.5);
+    doc.text("E-Ticket No.", paxCol2 + 6, curY + 12.5);
+    doc.text("Type", paxCol3 + 6, curY + 12.5);
+    doc.text("Seat", paxCol4 + 6, curY + 12.5);
+
+    curY += paxHeaderH;
+
+    paxList.forEach((p, idx) => {
+        doc.setFillColor(...LT);
+        doc.rect(marginL, curY, textW, paxRowH, 'F');
+        doc.setDrawColor(...BDT);
+        doc.setLineWidth(0.5);
+        doc.rect(marginL, curY, textW, paxRowH, 'S');
+
+        doc.line(paxCol2, curY, paxCol2, curY + paxRowH);
+        doc.line(paxCol3, curY, paxCol3, curY + paxRowH);
+        doc.line(paxCol4, curY, paxCol4, curY + paxRowH);
+
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLK);
+        doc.text(p.name || "SAMPLE PASSENGER", marginL + 6, curY + 13.5, { maxWidth: 130 });
+
+        doc.setFont("helvetica", "normal");
+        doc.text(p.eticket || p.eTicketNo || data.eTicketNo || "To be advised at check-in", paxCol2 + 6, curY + 13.5, { maxWidth: 160 });
+        doc.text(p.type || "Adult", paxCol3 + 6, curY + 13.5, { maxWidth: 90 });
+        doc.text(p.seat || "—", paxCol4 + 6, curY + 13.5, { maxWidth: 90 });
+
+        curY += paxRowH;
+    });
+
+    curY += 20;
+
+    // 5. BAGGAGE ALLOWANCE
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SCD);
+    doc.text("Baggage Allowance", marginL, curY);
+    curY += 8;
+
+    const bagRowH = 22.0;
+    const totalBagH = bagRowH * paxList.length;
+    doc.setFillColor(...LT);
+    doc.rect(marginL, curY, textW, totalBagH, 'F');
+    doc.setDrawColor(...SCY);
+    doc.setLineWidth(0.5);
+    doc.rect(marginL, curY, textW, totalBagH, 'S');
+
+    const bagSplit = marginL + 130;
+    doc.line(bagSplit, curY, bagSplit, curY + totalBagH);
+
+    paxList.forEach((p, idx) => {
+        const rowY = curY + (idx * bagRowH);
+        if (idx > 0) {
+            doc.line(marginL, rowY, rightEdge, rowY);
+        }
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BLK);
+        doc.text(p.name || "SAMPLE PASSENGER", marginL + 6, rowY + 14.5, { maxWidth: 120 });
+
+        doc.setFont("helvetica", "normal");
+        const bagInfo = p.baggage || data.checkedBaggage || "Checked: 30 kg   |   Carry-on: 7 kg";
+        doc.text(bagInfo, bagSplit + 6, rowY + 14.5, { maxWidth: 360 });
+    });
+
+    curY += totalBagH + 20;
+
+    // 6. NOTES
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...SCD);
+    doc.text("Notes", marginL, curY);
+    curY += 12;
+
+    const notesBullets = [];
+    if (isSample) {
+        notesBullets.push("•  This is a SAMPLE template for layout demonstration only — not a valid ticket or booking confirmation.");
+    }
+    notesBullets.push(
+        "•  Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or itinerary may also be required.",
+        "•  Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.",
+        "•  Please arrive at the airport at least 3 hours before departure to allow enough time for check-in."
+    );
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...DK);
+
+    notesBullets.forEach(b => {
+        const lines = doc.splitTextToSize(b, textW - 8);
+        doc.text(lines, marginL + 4, curY);
+        curY += (lines.length * 10) + 2;
+    });
+
+    curY += 6;
+
+    // 7. FOOTER: thin yellow rule (0.6mm = 1.7pt)
+    doc.setDrawColor(...SCY);
+    doc.setLineWidth(1.7);
+    doc.line(marginL, curY, rightEdge, curY);
+    curY += 14;
+
+    // Centered 8pt gray footer
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...MUT);
+    const depDateShort = firstFlight.depDateFormatted ? firstFlight.depDateFormatted.replace(/^[A-Za-z]+day,\s*/, '').toUpperCase() : '1 NOV 2026';
+    const footerMsg = isSample
+        ? `flyscoot.com   |   SAMPLE TEMPLATE — not a valid ticket`
+        : `flyscoot.com   |   Booking Ref ${pnr}   |   ${firstFlight.flightNo || 'TR 001'} ${depCity} - ${arrCity}, ${depDateShort}`;
+    doc.text(footerMsg, 595.28 / 2, curY, { align: "center" });
+
+    return doc;
+}
+
+/**
  * Generate native vector jsPDF document matching the exact official template
  */
 export async function generateAirAsiaPdfDoc(data) {
+    if (data.airline === 'Scoot' || /scoot|flyscoot|\bTR\s*\d/i.test(data.airlineName || '') || /TR\s*\d/i.test(data.flightNo || '')) {
+        return generateScootPdfDoc(data);
+    }
+    if (data.airline === 'EVA Air' || /eva\s*air|\bBR\s*\d/i.test(data.airlineName || '') || /BR\s*\d/i.test(data.flightNo || '')) {
+        return generateEvaAirPdfDoc(data);
+    }
+    if (data.airline === 'Singapore Airlines' || /singapore\s*air(?:lines)?|\bSQ\s*\d/i.test(data.airlineName || '') || /SQ\s*\d/i.test(data.flightNo || '')) {
+        return generateSingaporeAirlinesPdfDoc(data);
+    }
     if (data.airline === 'Thai Airways' || /thai\s*airways/i.test(data.airlineName || '') || /TG\s*\d/i.test(data.flightNo || '')) {
         return generateThaiAirwaysPdfDoc(data);
     }
@@ -1552,8 +3176,8 @@ export async function generateAirAsiaPdfDoc(data) {
     doc.line(col3X, bookBoxY, col3X, bookBoxY + bookBoxHeight);
     doc.line(col4X, bookBoxY, col4X, bookBoxY + bookBoxHeight);
 
-    const badgeBg = isVietJet ? [254, 242, 242] : [255, 235, 238]; // soft red tint
-    const badgeBorder = isVietJet ? [254, 202, 202] : [255, 205, 210];
+    const badgeBg = [255, 245, 102];    // Highlight Pen Yellow #FFF566
+    const badgeBorder = [230, 200, 0];  // Golden Yellow Border #E6C800
 
     if (isMultiSector) {
         doc.setFontSize(8.2);
@@ -1580,10 +3204,10 @@ export async function generateAirAsiaPdfDoc(data) {
 
             doc.setFillColor(...badgeBg);
             doc.setDrawColor(...badgeBorder);
-            doc.setLineWidth(0.5);
+            doc.setLineWidth(0.7);
             doc.roundedRect(col2X + 5, by, badgeW, badgeH, 2, 2, 'FD');
 
-            doc.setTextColor(...redColor);
+            doc.setTextColor(...darkColor);
             doc.text(sc.time, col2X + 9, baselineY);
         });
     } else {
@@ -1610,10 +3234,10 @@ export async function generateAirAsiaPdfDoc(data) {
 
         doc.setFillColor(...badgeBg);
         doc.setDrawColor(...badgeBorder);
-        doc.setLineWidth(0.5);
+        doc.setLineWidth(0.7);
         doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 2, 2, 'FD');
 
-        doc.setTextColor(...redColor);
+        doc.setTextColor(...darkColor);
         doc.text(sc.time, badgeX + 4, bookBoxY + 13.0);
     }
 
@@ -1644,7 +3268,7 @@ export async function generateAirAsiaPdfDoc(data) {
     doc.setFont("helvetica", "normal");
     doc.text(data.flightClass || "Economy", col4X + 6, row2Baseline);
 
-    cursorY += bookBoxHeight + (isMultiSector ? 9 : 20);
+    cursorY += bookBoxHeight + (isMultiSector ? 18 : 22);
 
     // 3. PASSENGER
     drawSectionTitle("Passenger", cursorY);
@@ -1691,7 +3315,7 @@ export async function generateAirAsiaPdfDoc(data) {
         paxRowY += paxRowHeight;
     });
 
-    cursorY = paxRowY + 20;
+    cursorY = paxRowY + 22;
 
     // 4. FLIGHT INFORMATION
     drawSectionTitle("Flight Information", cursorY);
@@ -1831,7 +3455,7 @@ export async function generateAirAsiaPdfDoc(data) {
     doc.setFont("helvetica", "normal");
     doc.text(data.flightClass || "Economy", flCol2 + 6, currentFlY + 15);
 
-    cursorY = currentFlY + flClassRowHeight + (flightsList.length > 1 ? 14 : 20);
+    cursorY = currentFlY + flClassRowHeight + (flightsList.length > 1 ? 18 : 22);
 
     // 5. BAGGAGE ALLOWANCE
     drawSectionTitle("Baggage Allowance", cursorY);
@@ -1876,7 +3500,7 @@ export async function generateAirAsiaPdfDoc(data) {
     doc.text(personalLines[0] || "", bagColSplit + 6, bagBoxY + 85);
     if (personalLines[1]) doc.text(personalLines[1], bagColSplit + 6, bagBoxY + 98);
 
-    cursorY += bagBoxHeight + 11;
+    cursorY += bagBoxHeight + 14;
 
     // Footnote
     doc.setFontSize(8.5);
@@ -1884,7 +3508,7 @@ export async function generateAirAsiaPdfDoc(data) {
     doc.setTextColor(...mutedColor);
     doc.text("* Total weight of personal item and carry-on baggage must not exceed 7 kg.", marginX, cursorY);
 
-    cursorY += 18;
+    cursorY += 20;
 
     // 6. IMPORTANT INFORMATION
     drawSectionTitle("Important Information", cursorY);
@@ -1957,9 +3581,12 @@ export async function generateAirAsiaPdfDoc(data) {
  * Download the generated vector PDF
  */
 export async function downloadAirAsiaPdf(data) {
+    const isScoot = (data.airline === 'Scoot') || /scoot|flyscoot|\bTR\s*\d/i.test(data.airlineName || '') || /TR\s*\d/i.test(data.flightNo || '');
+    const isEva = (data.airline === 'EVA Air') || /eva\s*air|\bBR\s*\d/i.test(data.airlineName || '') || /BR\s*\d/i.test(data.flightNo || '');
+    const isSIA = (data.airline === 'Singapore Airlines') || /singapore\s*air(?:lines)?|\bSQ\s*\d/i.test(data.airlineName || '') || /SQ\s*\d/i.test(data.flightNo || '');
     const isThai = (data.airline === 'Thai Airways') || /thai\s*airways/i.test(data.airlineName || '') || /TG\s*\d/i.test(data.flightNo || '');
     const isVietJet = (data.airline === 'VietJet Air') || /vietjet/i.test(data.airlineName || '') || /VJ\d/i.test(data.flightNo || '');
-    const prefix = isThai ? 'ThaiAirways' : (isVietJet ? 'VietJet' : 'AirAsia');
+    const prefix = isScoot ? 'Scoot' : (isEva ? 'EVAAir' : (isSIA ? 'SingaporeAirlines' : (isThai ? 'ThaiAirways' : (isVietJet ? 'VietJet' : 'AirAsia'))));
     const primaryName = (data.passengers && data.passengers[0]?.name) || data.passengerName || prefix;
     const safeName = primaryName.replace(/[^a-zA-Z0-9]/g, '_');
     const safePnr = (data.pnr || data.bookingNo || 'Itinerary').replace(/[^a-zA-Z0-9]/g, '_');
@@ -2016,7 +3643,7 @@ export function renderThaiAirwaysTicketHtml(data) {
         <div style="height:3px; background:#D9A300; margin-bottom:12px;"></div>
 
         <!-- 2. BOOKING STRIP -->
-        <table style="width:100%; border-collapse:collapse; background:#F6F3FB; border:1px solid #D5CBE8; font-size:11px; margin-bottom:14px;">
+        <table style="width:100%; border-collapse:collapse; background:#F6F3FB; border:1px solid #D5CBE8; font-size:11px; margin-bottom:22px;">
             <tr>
                 <td style="padding:6px 8px; border:1px solid #D5CBE8; width:14%; font-weight:700; color:#333;">Booking Ref</td>
                 <td style="padding:6px 8px; border:1px solid #D5CBE8; width:27%; font-weight:700; font-size:13px; color:#111;">${pnr}</td>
@@ -2034,7 +3661,7 @@ export function renderThaiAirwaysTicketHtml(data) {
                 <td style="padding:6px 8px; border:1px solid #D5CBE8; vertical-align:middle; white-space:nowrap;">
                     ${sectorCheckins.map((sc, i) => `
                         <div style="${i > 0 ? 'margin-top:5px;' : ''}; white-space:nowrap;">
-                            <span style="display:inline-block; background:#F0E8FF; color:#3D1E6D; border:1px solid #D5CBE8; font-weight:700; font-size:10px; padding:2px 7px; border-radius:3px; white-space:nowrap;">${sc.time}</span>
+                            <span style="display:inline-block; background:#FFF566; color:#111111; border:1.5px solid #E6C800; font-weight:800; font-size:10.5px; padding:3px 8px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 3px rgba(230,200,0,0.25);">${sc.time}</span>
                         </div>
                     `).join('')}
                 </td>
@@ -2046,8 +3673,8 @@ export function renderThaiAirwaysTicketHtml(data) {
         </table>
 
         <!-- 3. FLIGHT DETAILS -->
-        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:6px;">Flight Details</div>
-        <div style="margin-bottom:14px;">
+        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:8px;">Flight Details</div>
+        <div style="margin-bottom:22px;">
             ${flights.map(f => {
                 const fDepCity = extractCityName(f.depAirport) || 'Departure';
                 const fArrCity = extractCityName(f.arrAirport) || 'Arrival';
@@ -2109,8 +3736,8 @@ export function renderThaiAirwaysTicketHtml(data) {
         </div>
 
         <!-- 4. PASSENGER DETAILS -->
-        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:6px;">Passenger Details</div>
-        <table style="width:100%; border-collapse:collapse; border:1px solid #D5CBE8; font-size:11px; margin-bottom:14px;">
+        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:8px;">Passenger Details</div>
+        <table style="width:100%; border-collapse:collapse; border:1px solid #D5CBE8; font-size:11px; margin-bottom:22px;">
             <thead>
                 <tr style="background:#3D1E6D; color:#fff;">
                     <th style="padding:7px 8px; text-align:left; border:1px solid #D5CBE8; width:30%; font-weight:700;">Name</th>
@@ -2132,8 +3759,8 @@ export function renderThaiAirwaysTicketHtml(data) {
         </table>
 
         <!-- 5. BAGGAGE & EXTRA SERVICES -->
-        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:6px;">Baggage &amp; Extra Services</div>
-        <table style="width:100%; border-collapse:collapse; background:#FDF6E3; border:1px solid #D9A300; font-size:11px; margin-bottom:14px;">
+        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:8px;">Baggage &amp; Extra Services</div>
+        <table style="width:100%; border-collapse:collapse; background:#FDF6E3; border:1px solid #D9A300; font-size:11px; margin-bottom:22px;">
             ${paxList.map(p => `
                 <tr>
                     <td style="padding:7px 8px; border:1px solid #D9A300; width:30%; font-weight:700; color:#111;">${p.name || ''}</td>
@@ -2143,8 +3770,8 @@ export function renderThaiAirwaysTicketHtml(data) {
         </table>
 
         <!-- 6. NOTES -->
-        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:6px;">Notes</div>
-        <ul style="margin:0 0 14px 0; padding-left:16px; font-size:9px; color:#333; line-height:1.55;">
+        <div style="font-size:14px; font-weight:800; color:#3D1E6D; margin-bottom:8px;">Notes</div>
+        <ul style="margin:0 0 22px 0; padding-left:16px; font-size:9px; color:#333; line-height:1.55;">
             <li style="margin-bottom:3px;">Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or this itinerary may also be required.</li>
             <li style="margin-bottom:3px;">Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.</li>
             <li style="margin-bottom:3px;">Extra services (preferred seat / additional baggage, etc.): to change seats, flights or travel dates, please contact THAI Worldwide Office or THAI Contact Center (+66-2-3561111).</li>
@@ -2161,9 +3788,619 @@ export function renderThaiAirwaysTicketHtml(data) {
     `;
 }
 /**
+ * Generate preview HTML markup for EVA Air matching official template
+ */
+export function renderEvaAirTicketHtml(data) {
+    const logoSrc = cachedEvaAirLogoDataUrl || 'eva-air-logo.png';
+    const allPnrs = resolveAllPnrs(data);
+    const pnr = allPnrs.length > 0 ? allPnrs.join(' / ') : ((data.pnr || data.bookingNo || 'EVA01').trim().toUpperCase());
+    const isSample = /sample/i.test(pnr) || /sample/i.test(data.bookingNo || '') || /sample/i.test(data.passengerName || '') || data.isSample;
+    const issuedDate = data.issuedDate || formatTicketDate(new Date());
+
+    const paxList = (data.passengers && data.passengers.length > 0)
+        ? data.passengers
+        : [{ name: data.passengerName || 'SAMPLE PASSENGER', type: data.passengerType || 'Adult', eticket: data.eTicketNo || '', passport: '', expiry: '' }];
+    const paxSummary = paxList.length === 1 ? `1 ${paxList[0].type || 'Adult'}` : `${paxList.length} Adults`;
+
+    const flights = (data.flights && data.flights.length > 0)
+        ? data.flights
+        : [{
+            flightNo: data.flightNo || 'BR 001', airlineName: data.airlineName || 'EVA Air',
+            depTime: data.depTime || '09:25', depDateFormatted: data.depDateFormatted || 'Sunday, 1 November 2026',
+            depAirport: data.depAirport || 'Taipei - Taoyuan (TPE)', depTerminal: data.depTerminal || 'Terminal 2',
+            arrTime: data.arrTime || '13:05', arrDateFormatted: data.arrDateFormatted || 'Sunday, 1 November 2026',
+            arrAirport: data.arrAirport || 'Bangkok - Suvarnabhumi (BKK)', arrTerminal: data.arrTerminal || '',
+            route: data.route || 'TPE - BKK', duration: data.duration || '3h 40min, Non-Stop', aircraft: data.aircraft || 'Boeing 787-10', flightClass: data.flightClass || 'Economy (Y)'
+        }];
+    const firstFlight = flights[0];
+    const depCity = extractCityName(firstFlight.depAirport) || 'Taipei';
+    const arrCity = extractCityName(firstFlight.arrAirport) || 'Bangkok';
+
+    const sectorCheckins = getSectorCheckinList(data).slice(0, 2);
+    const depDateShort = firstFlight.depDateFormatted ? firstFlight.depDateFormatted.replace(/^[A-Za-z]+day,\s*/, '').toUpperCase() : '1 NOV 2026';
+
+    return `
+    <div class="airasia-ticket-wrapper" id="airAsiaTicketDocument" style="background:#ffffff; color:#333333; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:36px 44px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:800px; margin:0 auto; box-sizing:border-box; line-height:1.35; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+
+        <!-- 1. HEADER -->
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px;">
+            <div style="height:46px; display:flex; align-items:center;">
+                <img src="${logoSrc}" alt="EVA Air" style="height:44px; max-width:210px; object-fit:contain; background:transparent;">
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:22px; font-weight:800; color:#007A3D; letter-spacing:0.5px; line-height:1.15;">BOOKING CONFIRMATION</div>
+                ${isSample ? `<div style="font-size:10px; font-weight:700; color:#D32F2F; margin-top:2px;">SAMPLE — not a valid ticket</div>` : ''}
+                <div style="font-size:10px; color:#555; margin-top:2px;">EVA Air (BR)</div>
+                <div style="font-size:15px; font-weight:700; color:#007A3D; margin-top:2px;">Booking Ref: ${pnr}</div>
+            </div>
+        </div>
+        <div style="height:3.5px; background:#F26522; margin-bottom:14px;"></div>
+
+        <!-- 2. BOOKING STRIP -->
+        <table style="width:100%; border-collapse:collapse; background:#EEF7F0; border:1px solid #BCD8C2; font-size:11px; margin-bottom:22px;">
+            <tr>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; width:14%; font-weight:700; color:#333;">Booking Ref</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; width:27%; font-weight:700; font-size:12px; color:#111;">${pnr}</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; width:13%; font-weight:700; color:#333;">Issued Date</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; width:17%; color:#333;">${issuedDate}</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; width:14%; font-weight:700; color:#333;">Passengers</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; width:15%; color:#333;">${paxSummary}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; font-weight:700; color:#007A3D; vertical-align:middle; white-space:nowrap;">
+                    ${sectorCheckins.map((sc, i) => `
+                        <div style="${i > 0 ? 'margin-top:6px;' : ''}; font-size:10.5px; white-space:nowrap;">${sc.label}</div>
+                    `).join('')}
+                </td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; vertical-align:middle; white-space:nowrap;">
+                    ${sectorCheckins.map((sc, i) => `
+                        <div style="${i > 0 ? 'margin-top:5px;' : ''}; white-space:nowrap;">
+                            <span style="display:inline-block; background:#FFF566; color:#111111; border:1.5px solid #E6C800; font-weight:800; font-size:10.5px; padding:3px 8px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 3px rgba(230,200,0,0.25);">${sc.time}</span>
+                        </div>
+                    `).join('')}
+                </td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; font-weight:700; color:#333; vertical-align:middle;">Status</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; font-weight:700; color:#111; vertical-align:middle;">${isSample ? 'Confirmed (Sample)' : 'Confirmed'}</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; font-weight:700; color:#333; vertical-align:middle;">Alliance</td>
+                <td style="padding:6px 8px; border:1px solid #BCD8C2; color:#333; line-height:1.2; vertical-align:middle;">Star<br>Alliance</td>
+            </tr>
+        </table>
+
+        <!-- 3. FLIGHT DETAILS -->
+        <div style="font-size:14px; font-weight:800; color:#007A3D; margin-bottom:8px;">Flight Details</div>
+        <div style="margin-bottom:22px;">
+            ${flights.map(f => {
+                const fDepCity = extractCityName(f.depAirport) || 'Taipei';
+                const fArrCity = extractCityName(f.arrAirport) || 'Bangkok';
+                let fArrAirport = f.arrAirport || '';
+                if (f.arrTerminal) fArrAirport += `, ${f.arrTerminal}`;
+                const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'TPE'} - ${lookupAirportCode(f.arrAirport) || 'BKK'}`;
+                const fFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'BR 001';
+                const fPnr = f.pnr || pnr;
+
+                return `
+                <div style="border:1px solid #BCD8C2; border-radius:3px; overflow:hidden; margin-bottom:12px;">
+                    <!-- Upper Green Card -->
+                    <div style="background:#007A3D; color:#ffffff; padding:12px 14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <div style="font-size:16px; font-weight:800; letter-spacing:0.3px; display:inline-flex; align-items:center;">
+                                <span>${fDepCity}</span>
+                                <span style="display:inline-flex; align-items:center; margin:0 9px;">
+                                    <svg width="20" height="13" viewBox="0 0 20 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <line x1="1" y1="6.5" x2="14" y2="6.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+                                        <polygon points="13,2 19,6.5 13,11" fill="#FFFFFF"/>
+                                    </svg>
+                                </span>
+                                <span>${fArrCity}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="font-size:11px; font-weight:500; opacity:0.95;">${fFlightNo} &nbsp;|&nbsp; EVA Air</div>
+                                ${fPnr && fPnr !== pnr ? `<div style="background:#F26522; color:#FFFFFF; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:3px; letter-spacing:0.5px; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.25);">Booking Ref: ${fPnr}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Times & Airport -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                            <div>
+                                <div style="font-size:20px; font-weight:800; letter-spacing:0.5px; line-height:1.1;">${f.depTime || '09:25'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:3px;">${f.depDateFormatted || 'Sunday, 1 November 2026'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:2px;">${f.depAirport || 'Taipei - Taoyuan (TPE)'}${f.depTerminal ? `, ${f.depTerminal}` : ''}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:20px; font-weight:800; letter-spacing:0.5px; line-height:1.1;">${f.arrTime || '13:05'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:3px;">${f.arrDateFormatted || f.depDateFormatted || 'Sunday, 1 November 2026'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:2px;">${fArrAirport || 'Bangkok - Suvarnabhumi (BKK)'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2x4 Info Table with Light Orange Background & Orange Borders -->
+                    <table style="width:100%; border-collapse:collapse; background:#FEF4EC; border-top:1px solid #F26522; font-size:11px;">
+                        <tr>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:15%; font-weight:700; color:#333;">Duration</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:35%; color:#222;">${f.duration || '3h 40min, Non-Stop'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:15%; font-weight:700; color:#333;">Aircraft</td>
+                            <td style="padding:6px 10px; border-bottom:1px solid #F26522; width:35%; color:#222;">${f.aircraft || 'Boeing 787-10'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; font-weight:700; color:#333;">Class</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; color:#222;">${f.flightClass || 'Economy (Y)'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; font-weight:700; color:#333;">Route</td>
+                            <td style="padding:6px 10px; color:#222;">${sRoute}</td>
+                        </tr>
+                    </table>
+                </div>
+                `;
+            }).join('')}
+        </div>
+
+        <!-- 4. PASSENGER DETAILS -->
+        <div style="font-size:14px; font-weight:800; color:#007A3D; margin-bottom:8px;">Passenger Details</div>
+        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:22px; border:1px solid #BCD8C2;">
+            <thead>
+                <tr style="background:#007A3D; color:#ffffff;">
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #BCD8C2; width:28%; font-weight:700;">Name</th>
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #BCD8C2; width:36%; font-weight:700;">E-Ticket No.</th>
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #BCD8C2; width:20%; font-weight:700;">Type</th>
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #BCD8C2; width:16%; font-weight:700;">Seat</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${paxList.map(p => `
+                    <tr style="background:#EEF7F0;">
+                        <td style="padding:6px 8px; border:1px solid #BCD8C2; font-weight:700; color:#111;">${p.name || 'SAMPLE PASSENGER'}</td>
+                        <td style="padding:6px 8px; border:1px solid #BCD8C2; color:#333;">${p.eticket || p.eTicketNo || data.eTicketNo || 'To be advised at check-in'}</td>
+                        <td style="padding:6px 8px; border:1px solid #BCD8C2; color:#333;">${p.type || 'Adult'}</td>
+                        <td style="padding:6px 8px; border:1px solid #BCD8C2; color:#333;">${p.seat || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+
+        <!-- 5. BAGGAGE ALLOWANCE -->
+        <div style="font-size:14px; font-weight:800; color:#007A3D; margin-bottom:8px;">Baggage Allowance</div>
+        <table style="width:100%; border-collapse:collapse; background:#FEF4EC; border:1px solid #F26522; font-size:11px; margin-bottom:22px;">
+            ${paxList.map(p => {
+                const rawBag = p.baggage || data.checkedBaggage || 'Checked: 30 kg   |   Carry-on: 7 kg';
+                const bagInfo = formatCheckedBaggageLine(rawBag);
+                return `
+                <tr>
+                    <td style="padding:6px 10px; border:1px solid #F26522; width:28%; font-weight:700; color:#111;">${p.name || 'SAMPLE PASSENGER'}</td>
+                    <td style="padding:6px 10px; border:1px solid #F26522; width:72%; color:#222;">${bagInfo}</td>
+                </tr>
+                `;
+            }).join('')}
+        </table>
+
+        <!-- 6. NOTES -->
+        <div style="font-size:14px; font-weight:800; color:#007A3D; margin-bottom:8px;">Notes</div>
+        <ul style="margin:0 0 22px 0; padding-left:18px; font-size:10px; color:#444; line-height:1.45;">
+            ${isSample ? `<li style="margin-bottom:3px; font-weight:600; color:#444;">This is a SAMPLE template for layout demonstration only — not a valid ticket or booking confirmation.</li>` : ''}
+            <li style="margin-bottom:3px;">Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or itinerary may also be required.</li>
+            <li style="margin-bottom:3px;">Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.</li>
+            <li style="margin-bottom:3px;">Please arrive at the airport at least 3 hours before departure to allow enough time for check-in.</li>
+        </ul>
+
+        <!-- 7. FOOTER -->
+        <div style="height:1.7px; background:#F26522; margin-bottom:10px;"></div>
+        <div style="text-align:center; font-size:10px; color:#777; line-height:1.4;">
+            ${isSample
+                ? `evaair.com &nbsp;&nbsp;|&nbsp;&nbsp; SAMPLE TEMPLATE — not a valid ticket`
+                : `evaair.com &nbsp;&nbsp;|&nbsp;&nbsp; Booking Ref ${pnr} &nbsp;&nbsp;|&nbsp;&nbsp; ${firstFlight.flightNo || 'BR 001'} ${depCity} - ${arrCity}, ${depDateShort}`}
+        </div>
+
+    </div>
+    `;
+}
+
+/**
+ * Generate preview HTML markup for Singapore Airlines matching official template
+ */
+export function renderSingaporeAirlinesTicketHtml(data) {
+    const logoSrc = cachedSIADataUrl || 'singapore-airlines-logo.png';
+    const allPnrs = resolveAllPnrs(data);
+    const pnr = allPnrs.length > 0 ? allPnrs.join(' / ') : ((data.pnr || data.bookingNo || 'SMPL01').trim().toUpperCase());
+    const issuedDate = data.issuedDate || formatTicketDate(new Date());
+
+    const paxList = (data.passengers && data.passengers.length > 0)
+        ? data.passengers
+        : [{ name: data.passengerName || 'SAMPLE PASSENGER', type: data.passengerType || 'Adult', eticket: data.eTicketNo || '', passport: '', expiry: '' }];
+
+    const flights = (data.flights && data.flights.length > 0)
+        ? data.flights
+        : [{
+            flightNo: data.flightNo || 'SQ 001', airlineName: data.airlineName || 'Singapore Airlines',
+            depTime: data.depTime || '09:00', depDateFormatted: data.depDateFormatted || 'Saturday, 1 November 2026', depAirport: data.depAirport || 'Singapore - Changi (SIN)', depTerminal: data.depTerminal || 'Terminal 3',
+            arrTime: data.arrTime || '15:30', arrDateFormatted: data.arrDateFormatted || 'Saturday, 1 November 2026', arrAirport: data.arrAirport || 'London - Heathrow (LHR)', arrTerminal: data.arrTerminal || 'Terminal 2',
+            route: data.route || 'SIN - LHR', duration: data.duration || '13h 30min, Non-Stop', aircraft: data.aircraft || 'Airbus A380-800', flightClass: data.flightClass || 'Economy (S)'
+        }];
+    const firstFlight = flights[0];
+    const depCity = extractCityName(firstFlight.depAirport) || 'Singapore';
+    const arrCity = extractCityName(firstFlight.arrAirport) || 'London';
+    const paxSummary = paxList.length === 1 ? `1 ${paxList[0].type || 'Adult'}` : `${paxList.length} Adults`;
+
+    const sectorCheckins = getSectorCheckinList(data).slice(0, 2);
+    const depDateShort = firstFlight.depDateFormatted ? firstFlight.depDateFormatted.replace(/^[A-Za-z]+day,\s*/, '').toUpperCase() : '1 NOV 2026';
+
+    return `
+    <div style="font-family:Helvetica,Arial,sans-serif; max-width:700px; margin:0 auto; padding:24px 28px; background:#ffffff; color:#333; line-height:1.4;">
+
+        <!-- 1. HEADER -->
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:4px;">
+            <img src="${logoSrc}" alt="Singapore Airlines" style="height:46px; object-fit:contain; background:transparent;">
+            <div style="text-align:right;">
+                <div style="font-size:20px; font-weight:800; color:#1B3A6B; letter-spacing:0.5px;">BOOKING CONFIRMATION</div>
+                <div style="font-size:10px; color:#555;">Singapore Airlines (SQ)</div>
+                <div style="font-size:14px; font-weight:700; color:#1B3A6B; margin-top:2px;">Booking Ref: ${pnr}</div>
+            </div>
+        </div>
+        <div style="height:3px; background:#E8A90C; margin-bottom:12px;"></div>
+
+        <!-- 2. BOOKING STRIP -->
+        <table style="width:100%; border-collapse:collapse; background:#F2F5FA; border:1px solid #B9C6DD; font-size:11px; margin-bottom:22px;">
+            <tr>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; width:14%; font-weight:700; color:#333;">Booking Ref</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; width:27%; font-weight:700; font-size:12px; color:#111;">${pnr}</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; width:13%; font-weight:700; color:#333;">Issued Date</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; width:17%; color:#333;">${issuedDate}</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; width:14%; font-weight:700; color:#333;">Passengers</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; width:15%; color:#333;">${paxSummary}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; font-weight:700; color:#1B3A6B; vertical-align:middle; white-space:nowrap;">
+                    ${sectorCheckins.map((sc, i) => `
+                        <div style="${i > 0 ? 'margin-top:6px;' : ''}; font-size:10.5px; white-space:nowrap;">${sc.label}</div>
+                    `).join('')}
+                </td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; vertical-align:middle; white-space:nowrap;">
+                    ${sectorCheckins.map((sc, i) => `
+                        <div style="${i > 0 ? 'margin-top:5px;' : ''}; white-space:nowrap;">
+                            <span style="display:inline-block; background:#FFF566; color:#111111; border:1.5px solid #E6C800; font-weight:800; font-size:10.5px; padding:3px 8px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 3px rgba(230,200,0,0.25);">${sc.time}</span>
+                        </div>
+                    `).join('')}
+                </td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; font-weight:700; color:#333; vertical-align:middle;">Status</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; font-weight:700; color:#111; vertical-align:middle;">Confirmed</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; font-weight:700; color:#333; vertical-align:middle;">Alliance</td>
+                <td style="padding:6px 8px; border:1px solid #B9C6DD; color:#333; line-height:1.2; vertical-align:middle;">Star<br>Alliance</td>
+            </tr>
+        </table>
+
+        <!-- 3. FLIGHT DETAILS -->
+        <div style="font-size:14px; font-weight:800; color:#1B3A6B; margin-bottom:8px;">Flight Details</div>
+        <div style="margin-bottom:22px;">
+            ${flights.map(f => {
+                const fDepCity = extractCityName(f.depAirport) || 'Singapore';
+                const fArrCity = extractCityName(f.arrAirport) || 'London';
+                let fArrAirport = f.arrAirport || '';
+                if (f.arrTerminal) fArrAirport += `, ${f.arrTerminal}`;
+                const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'LHR'}`;
+
+                const fFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'SQ 001';
+                const fPnr = f.pnr || pnr;
+
+                return `
+                <!-- Flight Card -->
+                <div style="border:1px solid #B9C6DD; border-radius:3px; overflow:hidden; margin-bottom:12px;">
+                    <!-- Upper Blue Card -->
+                    <div style="background:#1B3A6B; color:#ffffff; padding:12px 14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <div style="font-size:16px; font-weight:800; letter-spacing:0.3px; display:inline-flex; align-items:center;">
+                                <span>${fDepCity}</span>
+                                <span style="display:inline-flex; align-items:center; margin:0 9px;">
+                                    <svg width="20" height="13" viewBox="0 0 20 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <line x1="1" y1="6.5" x2="14" y2="6.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+                                        <polygon points="13,2 19,6.5 13,11" fill="#FFFFFF"/>
+                                    </svg>
+                                </span>
+                                <span>${fArrCity}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="font-size:11px; font-weight:500; opacity:0.95;">${fFlightNo} &nbsp;|&nbsp; Singapore Airlines</div>
+                                ${fPnr && fPnr !== pnr ? `<div style="background:#E8A90C; color:#1B3A6B; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:3px; letter-spacing:0.5px; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.25);">Booking Ref: ${fPnr}</div>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <div style="flex:1;">
+                                <div style="font-size:22px; font-weight:800; color:#ffffff; line-height:1;">${f.depTime || '09:00'}</div>
+                                <div style="font-size:10px; color:#E1EBFA; margin-top:6px;">${f.depDateFormatted || 'Saturday, 1 November 2026'}</div>
+                                <div style="font-size:10px; color:#E1EBFA; margin-top:4px;">${f.depAirport || 'Singapore - Changi (SIN)'}${f.depTerminal ? ', ' + f.depTerminal : ''}</div>
+                            </div>
+                            <div style="flex:1; padding-left:16px;">
+                                <div style="font-size:22px; font-weight:800; color:#ffffff; line-height:1;">${f.arrTime || '15:30'}</div>
+                                <div style="font-size:10px; color:#E1EBFA; margin-top:6px;">${f.arrDateFormatted || 'Saturday, 1 November 2026'}</div>
+                                <div style="font-size:10px; color:#E1EBFA; margin-top:4px;">${fArrAirport || 'London - Heathrow (LHR), Terminal 2'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Lower Light-Gold Info Table (2x4 Grid) -->
+                    <table style="width:100%; border-collapse:collapse; background:#FDF8EC; border-top:1px solid #E8A90C; font-size:11px;">
+                        <tr>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Duration</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${f.duration || '13h 30min, Non-Stop'}</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Aircraft</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${f.aircraft || 'Airbus A380-800'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Class</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${f.flightClass || data.flightClass || 'Economy (S)'}</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Route</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${sRoute}</td>
+                        </tr>
+                    </table>
+                </div>
+                `;
+            }).join('')}
+        </div>
+
+        <!-- 4. PASSENGER DETAILS -->
+        <div style="font-size:14px; font-weight:800; color:#1B3A6B; margin-bottom:8px;">Passenger Details</div>
+        <table style="width:100%; border-collapse:collapse; border:1px solid #B9C6DD; font-size:11px; margin-bottom:22px;">
+            <thead>
+                <tr style="background:#1B3A6B; color:#fff;">
+                    <th style="padding:7px 8px; text-align:left; border:1px solid #B9C6DD; width:32%; font-weight:700;">Name</th>
+                    <th style="padding:7px 8px; text-align:left; border:1px solid #B9C6DD; width:32%; font-weight:700;">E-Ticket No.</th>
+                    <th style="padding:7px 8px; text-align:left; border:1px solid #B9C6DD; width:20%; font-weight:700;">Type</th>
+                    <th style="padding:7px 8px; text-align:left; border:1px solid #B9C6DD; width:16%; font-weight:700;">Seat</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${paxList.map((p, idx) => `
+                    <tr style="background:${idx % 2 === 0 ? '#F2F5FA' : '#fff'};">
+                        <td style="padding:7px 8px; border:1px solid #B9C6DD; font-weight:700; color:#111;">${p.name || 'SAMPLE PASSENGER'}</td>
+                        <td style="padding:7px 8px; border:1px solid #B9C6DD; color:#111;">${p.eticket || p.eTicketNo || data.eTicketNo || 'To be advised at check-in'}</td>
+                        <td style="padding:7px 8px; border:1px solid #B9C6DD; color:#111;">${p.type || 'Adult'}</td>
+                        <td style="padding:7px 8px; border:1px solid #B9C6DD; color:#111;">${p.seat || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+
+        <!-- 5. BAGGAGE ALLOWANCE -->
+        <div style="font-size:14px; font-weight:800; color:#1B3A6B; margin-bottom:8px;">Baggage Allowance</div>
+        <table style="width:100%; border-collapse:collapse; background:#FDF8EC; border:1px solid #E8A90C; font-size:11px; margin-bottom:22px;">
+            ${paxList.map(p => `
+                <tr>
+                    <td style="padding:7px 8px; border:1px solid #E8A90C; width:30%; font-weight:700; color:#111;">${p.name || 'SAMPLE PASSENGER'}</td>
+                    <td style="padding:7px 8px; border:1px solid #E8A90C; width:70%; color:#111;">${p.baggage || data.checkedBaggage || 'Checked: 30 kg   |   Carry-on: 7 kg'}</td>
+                </tr>
+            `).join('')}
+        </table>
+
+        <!-- 6. NOTES -->
+        <div style="font-size:14px; font-weight:800; color:#1B3A6B; margin-bottom:8px;">Notes</div>
+        <ul style="margin:0 0 22px 0; padding-left:16px; font-size:9px; color:#333; line-height:1.55;">
+            <li style="margin-bottom:3px;">Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or itinerary may also be required.</li>
+            <li style="margin-bottom:3px;">Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.</li>
+            <li style="margin-bottom:3px;">Please arrive at the airport at least 3 hours before departure to allow enough time for check-in.</li>
+        </ul>
+
+        <!-- 7. FOOTER -->
+        <div style="height:2px; background:#E8A90C; margin-bottom:10px;"></div>
+        <div style="text-align:center; font-size:9px; color:#888; line-height:1.4;">
+            singaporeair.com &nbsp;&nbsp;|&nbsp;&nbsp; Booking Ref ${pnr} &nbsp;&nbsp;|&nbsp;&nbsp; ${firstFlight.flightNo || 'SQ 001'} ${depCity} - ${arrCity}, ${depDateShort}
+        </div>
+
+    </div>
+    `;
+}
+
+/**
+ * Generate preview HTML markup for Scoot matching official template
+ */
+export function renderScootTicketHtml(data) {
+    const logoSrc = cachedScootLogoDataUrl || 'scoot-logo.png';
+    const allPnrs = resolveAllPnrs(data);
+    const pnr = allPnrs.length > 0 ? allPnrs.join(' / ') : ((data.pnr || data.bookingNo || 'TR001').trim().toUpperCase());
+    const isSample = /sample/i.test(pnr) || /sample/i.test(data.bookingNo || '') || /sample/i.test(data.passengerName || '') || data.isSample;
+    const issuedDate = data.issuedDate || formatTicketDate(new Date());
+
+    const paxList = (data.passengers && data.passengers.length > 0)
+        ? data.passengers
+        : [{ name: data.passengerName || 'SAMPLE PASSENGER', type: data.passengerType || 'Adult', eticket: data.eTicketNo || '', passport: '', expiry: '' }];
+
+    const flights = (data.flights && data.flights.length > 0)
+        ? data.flights
+        : [{
+            flightNo: data.flightNo || 'TR 001', airlineName: data.airlineName || 'Scoot',
+            depTime: data.depTime || '10:00', depDateFormatted: data.depDateFormatted || 'Sunday, 1 November 2026',
+            depAirport: data.depAirport || 'Singapore - Changi (SIN)', depTerminal: data.depTerminal || 'Terminal 1',
+            arrTime: data.arrTime || '11:30', arrDateFormatted: data.arrDateFormatted || 'Sunday, 1 November 2026',
+            arrAirport: data.arrAirport || 'Bangkok - Don Mueang (DMK)', arrTerminal: data.arrTerminal || 'Terminal 1',
+            route: data.route || 'SIN - DMK', duration: data.duration || '2h 30min, Non-Stop', aircraft: data.aircraft || 'Airbus A320neo', flightClass: data.flightClass || 'Economy (Fly)'
+        }];
+    const firstFlight = flights[0];
+    const depCity = extractCityName(firstFlight.depAirport) || 'Singapore';
+    const arrCity = extractCityName(firstFlight.arrAirport) || 'Bangkok';
+
+    const sectorCheckins = getSectorCheckinList(data).slice(0, 2);
+    const depDateShort = firstFlight.depDateFormatted ? firstFlight.depDateFormatted.replace(/^[A-Za-z]+day,\s*/, '').toUpperCase() : '1 NOV 2026';
+    const paxSummary = paxList.length === 1 ? `1 ${paxList[0].type || 'Adult'}` : `${paxList.length} Adults`;
+
+    return `
+    <div class="airasia-ticket-wrapper" id="airAsiaTicketDocument" style="background:#ffffff; color:#333333; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:36px 44px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:800px; margin:0 auto; box-sizing:border-box; line-height:1.35; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+
+        <!-- 1. HEADER -->
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px;">
+            <div style="height:55px; display:flex; align-items:center;">
+                <img src="${logoSrc}" alt="Scoot" style="height:54px; max-width:180px; object-fit:contain; background:transparent;">
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:22px; font-weight:800; color:#1D1D1B; letter-spacing:0.5px; line-height:1.15;">BOOKING CONFIRMATION</div>
+                ${isSample ? `<div style="font-size:10px; font-weight:700; color:#D32F2F; margin-top:2px;">SAMPLE — not a valid ticket</div>` : ''}
+                <div style="font-size:10px; color:#555; margin-top:2px;">Scoot (TR)</div>
+                <div style="font-size:15px; font-weight:700; color:#1D1D1B; margin-top:2px;">Booking Ref: ${pnr}</div>
+            </div>
+        </div>
+        <div style="height:3.5px; background:#FFE900; margin-bottom:14px;"></div>
+
+        <!-- 2. BOOKING STRIP -->
+        <table style="width:100%; border-collapse:collapse; background:#FFFBEA; border:1px solid #D8D0A8; font-size:11px; margin-bottom:22px;">
+            <tr>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; width:14%; font-weight:700; color:#333;">Booking Ref</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; width:27%; font-weight:700; font-size:12px; color:#111;">${pnr}</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; width:13%; font-weight:700; color:#333;">Issued Date</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; width:17%; color:#333;">${issuedDate}</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; width:14%; font-weight:700; color:#333;">Passengers</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; width:15%; color:#333;">${paxSummary}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; font-weight:700; color:#1D1D1B; vertical-align:middle; white-space:nowrap;">
+                    ${sectorCheckins.map((sc, i) => `
+                        <div style="${i > 0 ? 'margin-top:6px;' : ''}; font-size:10.5px; white-space:nowrap;">${sc.label}</div>
+                    `).join('')}
+                </td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; vertical-align:middle; white-space:nowrap;">
+                    ${sectorCheckins.map((sc, i) => `
+                        <div style="${i > 0 ? 'margin-top:5px;' : ''}; white-space:nowrap;">
+                            <span style="display:inline-block; background:#FFF566; color:#111111; border:1.5px solid #E6C800; font-weight:800; font-size:10.5px; padding:3px 8px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 3px rgba(230,200,0,0.25);">${sc.time}</span>
+                        </div>
+                    `).join('')}
+                </td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; font-weight:700; color:#333; vertical-align:middle;">Status</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; font-weight:700; color:#111; vertical-align:middle;">${isSample ? 'Confirmed (Sample)' : 'Confirmed'}</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; font-weight:700; color:#333; vertical-align:middle;">Alliance</td>
+                <td style="padding:6px 8px; border:1px solid #D8D0A8; color:#333; line-height:1.2; vertical-align:middle; font-size:13px; font-weight:700;">—</td>
+            </tr>
+        </table>
+
+        <!-- 3. FLIGHT DETAILS -->
+        <div style="font-size:14px; font-weight:800; color:#1D1D1B; margin-bottom:8px;">Flight Details</div>
+        <div style="margin-bottom:22px;">
+            ${flights.map(f => {
+                const fDepCity = extractCityName(f.depAirport) || 'Singapore';
+                const fArrCity = extractCityName(f.arrAirport) || 'Bangkok';
+                let fArrAirport = f.arrAirport || '';
+                if (f.arrTerminal) fArrAirport += `, ${f.arrTerminal}`;
+                const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'DMK'}`;
+                const fFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'TR 001';
+                const fPnr = f.pnr || pnr;
+
+                return `
+                <div style="border:1px solid #D8D0A8; border-radius:3px; overflow:hidden; margin-bottom:12px;">
+                    <!-- Upper Dark Card -->
+                    <div style="background:#1D1D1B; color:#ffffff; padding:12px 14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <div style="font-size:16px; font-weight:800; letter-spacing:0.3px; display:inline-flex; align-items:center;">
+                                <span>${fDepCity}</span>
+                                <span style="display:inline-flex; align-items:center; margin:0 9px;">
+                                    <svg width="20" height="13" viewBox="0 0 20 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <line x1="1" y1="6.5" x2="14" y2="6.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+                                        <polygon points="13,2 19,6.5 13,11" fill="#FFFFFF"/>
+                                    </svg>
+                                </span>
+                                <span>${fArrCity}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="font-size:11px; font-weight:500; opacity:0.95;">${fFlightNo} &nbsp;|&nbsp; Scoot</div>
+                                ${fPnr && fPnr !== pnr ? `<div style="background:#FFE900; color:#1D1D1B; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:3px; letter-spacing:0.5px; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,0.25);">Booking Ref: ${fPnr}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Times & Airport -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                            <div>
+                                <div style="font-size:20px; font-weight:800; letter-spacing:0.5px; line-height:1.1;">${f.depTime || '10:00'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:3px;">${f.depDateFormatted || 'Sunday, 1 November 2026'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:2px;">${f.depAirport || 'Singapore - Changi (SIN)'}${f.depTerminal ? `, ${f.depTerminal}` : ''}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:20px; font-weight:800; letter-spacing:0.5px; line-height:1.1;">${f.arrTime || '11:30'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:3px;">${f.arrDateFormatted || f.depDateFormatted || 'Sunday, 1 November 2026'}</div>
+                                <div style="font-size:10px; opacity:0.9; margin-top:2px;">${fArrAirport || 'Bangkok - Don Mueang (DMK)'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2x4 Info Table with Light Yellow Background & Yellow Borders -->
+                    <table style="width:100%; border-collapse:collapse; background:#FFFBEA; border-top:1px solid #FFE900; font-size:11px;">
+                        <tr>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:15%; font-weight:700; color:#333;">Duration</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:35%; color:#222;">${f.duration || '2h 30min, Non-Stop'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:15%; font-weight:700; color:#333;">Aircraft</td>
+                            <td style="padding:6px 10px; border-bottom:1px solid #FFE900; width:35%; color:#222;">${f.aircraft || 'Airbus A320neo'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; font-weight:700; color:#333;">Class</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; color:#222;">${f.flightClass || 'Economy (Fly)'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; font-weight:700; color:#333;">Route</td>
+                            <td style="padding:6px 10px; color:#222;">${sRoute}</td>
+                        </tr>
+                    </table>
+                </div>
+                `;
+            }).join('')}
+        </div>
+
+        <!-- 4. PASSENGER DETAILS -->
+        <div style="font-size:14px; font-weight:800; color:#1D1D1B; margin-bottom:8px;">Passenger Details</div>
+        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:22px; border:1px solid #D8D0A8;">
+            <thead>
+                <tr style="background:#1D1D1B; color:#ffffff;">
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #D8D0A8; width:28%; font-weight:700;">Name</th>
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #D8D0A8; width:36%; font-weight:700;">E-Ticket No.</th>
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #D8D0A8; width:20%; font-weight:700;">Type</th>
+                    <th style="padding:6px 8px; text-align:left; border:1px solid #D8D0A8; width:16%; font-weight:700;">Seat</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${paxList.map(p => `
+                    <tr style="background:#FFFBEA;">
+                        <td style="padding:6px 8px; border:1px solid #D8D0A8; font-weight:700; color:#111;">${p.name || 'SAMPLE PASSENGER'}</td>
+                        <td style="padding:6px 8px; border:1px solid #D8D0A8; color:#333;">${p.eticket || p.eTicketNo || data.eTicketNo || 'To be advised at check-in'}</td>
+                        <td style="padding:6px 8px; border:1px solid #D8D0A8; color:#333;">${p.type || 'Adult'}</td>
+                        <td style="padding:6px 8px; border:1px solid #D8D0A8; color:#333;">${p.seat || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+
+        <!-- 5. BAGGAGE ALLOWANCE -->
+        <div style="font-size:14px; font-weight:800; color:#1D1D1B; margin-bottom:8px;">Baggage Allowance</div>
+        <table style="width:100%; border-collapse:collapse; background:#FFFBEA; border:1px solid #FFE900; font-size:11px; margin-bottom:22px;">
+            ${paxList.map(p => {
+                const bagInfo = p.baggage || data.checkedBaggage || 'Checked: 30 kg   |   Carry-on: 7 kg';
+                return `
+                <tr>
+                    <td style="padding:6px 10px; border:1px solid #FFE900; width:28%; font-weight:700; color:#111;">${p.name || 'SAMPLE PASSENGER'}</td>
+                    <td style="padding:6px 10px; border:1px solid #FFE900; width:72%; color:#222;">${bagInfo}</td>
+                </tr>
+                `;
+            }).join('')}
+        </table>
+
+        <!-- 6. NOTES -->
+        <div style="font-size:14px; font-weight:800; color:#1D1D1B; margin-bottom:8px;">Notes</div>
+        <ul style="margin:0 0 22px 0; padding-left:18px; font-size:10px; color:#444; line-height:1.45;">
+            ${isSample ? `<li style="margin-bottom:3px; font-weight:600; color:#444;">This is a SAMPLE template for layout demonstration only — not a valid ticket or booking confirmation.</li>` : ''}
+            <li style="margin-bottom:3px;">Passengers must present the valid ID used to purchase the ticket at check-in; boarding pass or itinerary may also be required.</li>
+            <li style="margin-bottom:3px;">Tickets must be used in the sequence set out in the itinerary, otherwise the airline reserves the right to refuse carriage.</li>
+            <li style="margin-bottom:3px;">Please arrive at the airport at least 3 hours before departure to allow enough time for check-in.</li>
+        </ul>
+
+        <!-- 7. FOOTER -->
+        <div style="height:2px; background:#FFE900; margin-bottom:10px;"></div>
+        <div style="text-align:center; font-size:9px; color:#888; line-height:1.4;">
+            ${isSample ? 'flyscoot.com &nbsp;&nbsp;|&nbsp;&nbsp; SAMPLE TEMPLATE — not a valid ticket' : `flyscoot.com &nbsp;&nbsp;|&nbsp;&nbsp; Booking Ref ${pnr} &nbsp;&nbsp;|&nbsp;&nbsp; ${firstFlight.flightNo || 'TR 001'} ${depCity} - ${arrCity}, ${depDateShort}`}
+        </div>
+
+    </div>
+    `;
+}
+
+/**
  * Generate preview HTML markup that renders identically to the PDF
  */
 export function renderAirAsiaTicketHtml(data) {
+    if (data.airline === 'Scoot' || /scoot|flyscoot|\bTR\s*\d/i.test(data.airlineName || '') || /TR\s*\d/i.test(data.flightNo || '')) {
+        return renderScootTicketHtml(data);
+    }
+    if (data.airline === 'EVA Air' || /eva\s*air|\bBR\s*\d/i.test(data.airlineName || '') || /BR\s*\d/i.test(data.flightNo || '')) {
+        return renderEvaAirTicketHtml(data);
+    }
+    if (data.airline === 'Singapore Airlines' || /singapore\s*air(?:lines)?|\bSQ\s*\d/i.test(data.airlineName || '') || /SQ\s*\d/i.test(data.flightNo || '')) {
+        return renderSingaporeAirlinesTicketHtml(data);
+    }
     if (data.airline === 'Thai Airways' || /thai\s*airways/i.test(data.airlineName || '') || /TG\s*\d/i.test(data.flightNo || '')) {
         return renderThaiAirwaysTicketHtml(data);
     }
@@ -2218,7 +4455,7 @@ export function renderAirAsiaTicketHtml(data) {
         <div style="height:4.5px; background:#E31E24; margin-bottom:20px;"></div>
 
         <!-- Booking Information Section -->
-        <div style="margin-bottom:20px;">
+        <div style="margin-bottom:24px;">
             <div style="font-size:15px; font-weight:700; color:#E31E24; margin-bottom:8px;">Booking Information</div>
             <table style="width:100%; border-collapse:collapse; background:#F5F5F5; border:1px solid #CCCCCC; font-size:12px;">
                 <tr>
@@ -2230,7 +4467,7 @@ export function renderAirAsiaTicketHtml(data) {
                     <td style="padding:7px 10px; border:1px solid #CCCCCC; width:28%; vertical-align:middle; white-space:nowrap;">
                         ${sectorCheckins.map((sc, i) => `
                             <div style="${i > 0 ? 'margin-top:5px;' : ''}; white-space:nowrap;">
-                                <span style="display:inline-block; background:#FFEBEE; color:#D32F2F; border:1px solid #FFCDD2; font-weight:700; font-size:10.5px; padding:2px 7px; border-radius:3px; white-space:nowrap;">${sc.time}</span>
+                                <span style="display:inline-block; background:#FFF566; color:#111111; border:1.5px solid #E6C800; font-weight:800; font-size:11px; padding:3px 8px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 3px rgba(230,200,0,0.25);">${sc.time}</span>
                             </div>
                         `).join('')}
                     </td>
@@ -2247,7 +4484,7 @@ export function renderAirAsiaTicketHtml(data) {
         </div>
 
         <!-- Passenger Section -->
-        <div style="margin-bottom:20px;">
+        <div style="margin-bottom:24px;">
             <div style="font-size:15px; font-weight:700; color:#E31E24; margin-bottom:8px;">Passenger</div>
             <table style="width:100%; border-collapse:collapse; background:#F5F5F5; border:1px solid #CCCCCC; font-size:12px;">
                 <thead>
@@ -2268,7 +4505,7 @@ export function renderAirAsiaTicketHtml(data) {
         </div>
 
         <!-- Flight Information Section -->
-        <div style="margin-bottom:20px;">
+        <div style="margin-bottom:24px;">
             <div style="font-size:15px; font-weight:700; color:#E31E24; margin-bottom:8px;">Flight Information</div>
             <table style="width:100%; border-collapse:collapse; background:#F5F5F5; border:1px solid #CCCCCC; font-size:12px;">
                 <thead>
@@ -2311,7 +4548,7 @@ export function renderAirAsiaTicketHtml(data) {
         </div>
 
         <!-- Baggage Allowance Section -->
-        <div style="margin-bottom:20px;">
+        <div style="margin-bottom:24px;">
             <div style="font-size:15px; font-weight:700; color:#E31E24; margin-bottom:8px;">Baggage Allowance</div>
             <table style="width:100%; border-collapse:collapse; background:#FDECEC; border:1px solid #E0AAAA; font-size:12px;">
                 <tr>
@@ -2342,7 +4579,7 @@ export function renderAirAsiaTicketHtml(data) {
         </div>
 
         <!-- Important Information Section -->
-        <div style="margin-bottom:20px;">
+        <div style="margin-bottom:24px;">
             <div style="font-size:15px; font-weight:700; color:#E31E24; margin-bottom:8px;">Important Information</div>
             <ul style="margin:0; padding-left:18px; font-size:11.5px; color:#333333; line-height:1.5;">
                 <li style="margin-bottom:4px;">Please arrive at the airport at least <strong>3 hours</strong> before departure to allow enough time for check-in.</li>
@@ -2380,9 +4617,12 @@ export async function downloadAirAsiaImage(data) {
         backgroundColor: '#ffffff'
     });
 
+    const isScoot = (data.airline === 'Scoot') || /scoot|flyscoot|\bTR\s*\d/i.test(data.airlineName || '') || /TR\s*\d/i.test(data.flightNo || '');
+    const isEva = (data.airline === 'EVA Air') || /eva\s*air|\bBR\s*\d/i.test(data.airlineName || '') || /BR\s*\d/i.test(data.flightNo || '');
+    const isSIA = (data.airline === 'Singapore Airlines') || /singapore\s*air(?:lines)?|\bSQ\s*\d/i.test(data.airlineName || '') || /SQ\s*\d/i.test(data.flightNo || '');
     const isThai = (data.airline === 'Thai Airways') || /thai\s*airways/i.test(data.airlineName || '') || /TG\s*\d/i.test(data.flightNo || '');
     const isVietJet = (data.airline === 'VietJet Air') || /vietjet/i.test(data.airlineName || '') || /VJ\d/i.test(data.flightNo || '');
-    const prefix = isThai ? 'ThaiAirways' : (isVietJet ? 'VietJet' : 'AirAsia');
+    const prefix = isScoot ? 'Scoot' : (isEva ? 'EVAAir' : (isSIA ? 'SingaporeAirlines' : (isThai ? 'ThaiAirways' : (isVietJet ? 'VietJet' : 'AirAsia'))));
     const primaryName = (data.passengers && data.passengers[0]?.name) || data.passengerName || prefix;
     const safeName = primaryName.replace(/[^a-zA-Z0-9]/g, '_');
     const safePnr = (data.pnr || data.bookingNo || 'Itinerary').replace(/[^a-zA-Z0-9]/g, '_');
@@ -2402,9 +4642,12 @@ export async function shareAirAsiaTicket(data) {
     const filename = await downloadAirAsiaPdf(data);
     showToast(`PDF downloaded: ${filename}`, 'success');
 
+    const isScoot = (data.airline === 'Scoot') || /scoot|flyscoot|\bTR\s*\d/i.test(data.airlineName || '') || /TR\s*\d/i.test(data.flightNo || '');
+    const isEva = (data.airline === 'EVA Air') || /eva\s*air|\bBR\s*\d/i.test(data.airlineName || '') || /BR\s*\d/i.test(data.flightNo || '');
+    const isSIA = (data.airline === 'Singapore Airlines') || /singapore\s*air(?:lines)?|\bSQ\s*\d/i.test(data.airlineName || '') || /SQ\s*\d/i.test(data.flightNo || '');
     const isThai = (data.airline === 'Thai Airways') || /thai\s*airways/i.test(data.airlineName || '') || /TG\s*\d/i.test(data.flightNo || '');
     const isVietJet = (data.airline === 'VietJet Air') || /vietjet/i.test(data.airlineName || '') || /VJ\d/i.test(data.flightNo || '');
-    const prefix = isThai ? 'ThaiAirways' : (isVietJet ? 'VietJet' : 'AirAsia');
+    const prefix = isScoot ? 'Scoot' : (isEva ? 'EVAAir' : (isSIA ? 'SingaporeAirlines' : (isThai ? 'ThaiAirways' : (isVietJet ? 'VietJet' : 'AirAsia'))));
     const primaryName = (data.passengers && data.passengers[0]?.name) || data.passengerName || prefix;
 
     if (navigator.share && navigator.canShare) {
