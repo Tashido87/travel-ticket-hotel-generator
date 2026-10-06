@@ -150,10 +150,15 @@ const AIRPORT_CODE_MAP = {
     'don mueang': 'DMK',
     'phuket': 'HKT',
     'chiang mai': 'CNX',
+    'chiang rai': 'CEI',
+    'mae fah luang': 'CEI',
     'krabi': 'KBV',
     'hat yai': 'HDY',
+    'udon thani': 'UTH',
     'yangon': 'RGN',
     'mandalay': 'MDL',
+    'naypyidaw': 'NYT',
+    'nay pyi taw': 'NYT',
     'phu quoc': 'PQC',
     'phú quốc': 'PQC',
     'ho chi minh': 'SGN',
@@ -162,6 +167,7 @@ const AIRPORT_CODE_MAP = {
     'hanoi': 'HAN',
     'noi bai': 'HAN',
     'da nang': 'DAD',
+    'danang': 'DAD',
     'cam ranh': 'CXR',
     'nha trang': 'CXR',
     'hai phong': 'HPH',
@@ -192,6 +198,8 @@ const AIRPORT_CODE_MAP = {
     'cebu': 'CEB',
     'seoul': 'ICN',
     'incheon': 'ICN',
+    'gimpo': 'GMP',
+    'busan': 'PUS',
     'tokyo': 'NRT',
     'narita': 'NRT',
     'haneda': 'HND',
@@ -200,6 +208,8 @@ const AIRPORT_CODE_MAP = {
     'nagoya': 'NGO',
     'chubu': 'NGO',
     'centrair': 'NGO',
+    'fukuoka': 'FUK',
+    'sapporo': 'CTS',
     'taipei': 'TPE',
     'taoyuan': 'TPE',
     'songshan': 'TSA',
@@ -208,31 +218,372 @@ const AIRPORT_CODE_MAP = {
     'macau': 'MFM',
     'guangzhou': 'CAN',
     'shanghai': 'PVG',
+    'beijing': 'PEK',
+    'daxing': 'PKX',
+    'shenzhen': 'SZX',
+    'chengdu': 'CTU',
+    'chongqing': 'CKG',
+    'kunming': 'KMG',
     'phnom penh': 'PNH',
     'siem reap': 'REP',
     'vientiane': 'VTE',
+    // United Kingdom & Ireland
     'london': 'LHR',
     'heathrow': 'LHR',
     'gatwick': 'LGW',
+    'stansted': 'STN',
+    'luton': 'LTN',
+    'london city': 'LCY',
+    'manchester': 'MAN',
+    'birmingham': 'BHX',
+    'edinburgh': 'EDI',
+    'glasgow': 'GLA',
+    'dublin': 'DUB',
+    // Europe
     'frankfurt': 'FRA',
+    'munich': 'MUC',
+    'berlin': 'BER',
+    'hamburg': 'HAM',
+    'dusseldorf': 'DUS',
     'paris': 'CDG',
     'charles de gaulle': 'CDG',
+    'orly': 'ORY',
+    'nice': 'NCE',
+    'lyon': 'LYS',
+    'amsterdam': 'AMS',
+    'schiphol': 'AMS',
+    'brussels': 'BRU',
     'zurich': 'ZRH',
+    'geneva': 'GVA',
+    'vienna': 'VIE',
+    'madrid': 'MAD',
+    'barcelona': 'BCN',
+    'rome': 'FCO',
+    'fiumicino': 'FCO',
+    'milan': 'MXP',
+    'malpensa': 'MXP',
+    'venice': 'VCE',
+    'lisbon': 'LIS',
+    'porto': 'OPO',
+    'athens': 'ATH',
+    'istanbul': 'IST',
+    'sabiha': 'SAW',
+    'copenhagen': 'CPH',
+    'stockholm': 'ARN',
+    'oslo': 'OSL',
+    'helsinki': 'HEL',
+    'warsaw': 'WAW',
+    'prague': 'PRG',
+    'budapest': 'BUD',
+    // North America (US & Canada)
+    'new york': 'JFK',
+    'jfk': 'JFK',
+    'newark': 'EWR',
+    'laguardia': 'LGA',
+    'los angeles': 'LAX',
+    'san francisco': 'SFO',
+    'chicago': 'ORD',
+    'o\'hare': 'ORD',
+    'ohare': 'ORD',
+    'miami': 'MIA',
+    'orlando': 'MCO',
+    'atlanta': 'ATL',
+    'dallas': 'DFW',
+    'fort worth': 'DFW',
+    'houston': 'IAH',
+    'seattle': 'SEA',
+    'tacoma': 'SEA',
+    'boston': 'BOS',
+    'washington': 'IAD',
+    'dulles': 'IAD',
+    'las vegas': 'LAS',
+    'denver': 'DEN',
+    'toronto': 'YYZ',
+    'vancouver': 'YVR',
+    'montreal': 'YUL',
+    'calgary': 'YYC',
+    // Australia & New Zealand
     'sydney': 'SYD',
+    'kingsford smith': 'SYD',
     'melbourne': 'MEL',
+    'tullamarine': 'MEL',
     'brisbane': 'BNE',
     'perth': 'PER',
+    'adelaide': 'ADL',
+    'gold coast': 'OOL',
+    'auckland': 'AKL',
+    'christchurch': 'CHC',
+    'wellington': 'WLG',
+    // Middle East
     'dubai': 'DXB',
+    'abu dhabi': 'AUH',
     'doha': 'DOH',
+    'hamad': 'DOH',
+    'riyadh': 'RUH',
+    'jeddah': 'JED',
+    'muscat': 'MCT',
+    'kuwait': 'KWI',
+    'bahrain': 'BAH',
+    'amman': 'AMM',
+    // India & South Asia
     'delhi': 'DEL',
-    'mumbai': 'BOM'
+    'indira gandhi': 'DEL',
+    'mumbai': 'BOM',
+    'chennai': 'MAA',
+    'bangalore': 'BLR',
+    'bengaluru': 'BLR',
+    'hyderabad': 'HYD',
+    'kolkata': 'CCU',
+    'dhaka': 'DAC',
+    'colombo': 'CMB',
+    'kathmandu': 'KTM',
+    'male': 'MLE',
+    'maldives': 'MLE',
+    // Africa & Latin America
+    'cairo': 'CAI',
+    'johannesburg': 'JNB',
+    'cape town': 'CPT',
+    'nairobi': 'NBO',
+    'sao paulo': 'GRU',
+    'guarulhos': 'GRU',
+    'buenos aires': 'EZE',
+    'mexico city': 'MEX',
+    'cancun': 'CUN'
 };
+
+/**
+ * High-precision IANA timezone mapping for major global airports
+ */
+export const AIRPORT_IANA_TIMEZONES = {
+    // Myanmar
+    RGN: 'Asia/Yangon', MDL: 'Asia/Yangon', NYT: 'Asia/Yangon',
+    // Thailand
+    BKK: 'Asia/Bangkok', DMK: 'Asia/Bangkok', CNX: 'Asia/Bangkok', CEI: 'Asia/Bangkok',
+    HKT: 'Asia/Bangkok', KBV: 'Asia/Bangkok', HDY: 'Asia/Bangkok', UTH: 'Asia/Bangkok',
+    // Singapore & Malaysia
+    SIN: 'Asia/Singapore',
+    KUL: 'Asia/Kuala_Lumpur', JHB: 'Asia/Kuala_Lumpur', PEN: 'Asia/Kuala_Lumpur', LGK: 'Asia/Kuala_Lumpur',
+    BKI: 'Asia/Kuala_Lumpur', KCH: 'Asia/Kuala_Lumpur', MYY: 'Asia/Kuala_Lumpur', SBW: 'Asia/Kuala_Lumpur',
+    TWU: 'Asia/Kuala_Lumpur', SDK: 'Asia/Kuala_Lumpur',
+    // Vietnam
+    HAN: 'Asia/Ho_Chi_Minh', SGN: 'Asia/Ho_Chi_Minh', DAD: 'Asia/Ho_Chi_Minh', CXR: 'Asia/Ho_Chi_Minh',
+    PQC: 'Asia/Ho_Chi_Minh', HPH: 'Asia/Ho_Chi_Minh', VCA: 'Asia/Ho_Chi_Minh', HUI: 'Asia/Ho_Chi_Minh',
+    VII: 'Asia/Ho_Chi_Minh', DLI: 'Asia/Ho_Chi_Minh', UIH: 'Asia/Ho_Chi_Minh', BMV: 'Asia/Ho_Chi_Minh',
+    PXU: 'Asia/Ho_Chi_Minh', VDH: 'Asia/Ho_Chi_Minh', VCL: 'Asia/Ho_Chi_Minh', VCS: 'Asia/Ho_Chi_Minh',
+    DIN: 'Asia/Ho_Chi_Minh', VKG: 'Asia/Ho_Chi_Minh', CAH: 'Asia/Ho_Chi_Minh', VDO: 'Asia/Ho_Chi_Minh',
+    // Indonesia, Philippines, Cambodia, Laos
+    CGK: 'Asia/Jakarta', SUB: 'Asia/Jakarta', DPS: 'Asia/Makassar',
+    MNL: 'Asia/Manila', CEB: 'Asia/Manila',
+    PNH: 'Asia/Phnom_Penh', REP: 'Asia/Phnom_Penh', VTE: 'Asia/Vientiane',
+    // Greater China, Taiwan, HK, Macau
+    HKG: 'Asia/Hong_Kong', MFM: 'Asia/Macau',
+    TPE: 'Asia/Taipei', TSA: 'Asia/Taipei', KHH: 'Asia/Taipei',
+    PVG: 'Asia/Shanghai', SHA: 'Asia/Shanghai', CAN: 'Asia/Shanghai', PEK: 'Asia/Shanghai',
+    PKX: 'Asia/Shanghai', SZX: 'Asia/Shanghai', CTU: 'Asia/Shanghai', CKG: 'Asia/Shanghai',
+    KMG: 'Asia/Shanghai', XIY: 'Asia/Shanghai',
+    // Japan & Korea
+    NRT: 'Asia/Tokyo', HND: 'Asia/Tokyo', KIX: 'Asia/Tokyo', NGO: 'Asia/Tokyo',
+    FUK: 'Asia/Tokyo', CTS: 'Asia/Tokyo', OKA: 'Asia/Tokyo',
+    ICN: 'Asia/Seoul', GMP: 'Asia/Seoul', PUS: 'Asia/Seoul', CJU: 'Asia/Seoul',
+    // South Asia
+    DEL: 'Asia/Kolkata', BOM: 'Asia/Kolkata', MAA: 'Asia/Kolkata', BLR: 'Asia/Kolkata',
+    HYD: 'Asia/Kolkata', CCU: 'Asia/Kolkata', DAC: 'Asia/Dhaka', CMB: 'Asia/Colombo',
+    KTM: 'Asia/Kathmandu', MLE: 'Indian/Maldives',
+    // Middle East
+    DXB: 'Asia/Dubai', AUH: 'Asia/Dubai', DOH: 'Asia/Qatar', RUH: 'Asia/Riyadh',
+    JED: 'Asia/Riyadh', MCT: 'Asia/Muscat', KWI: 'Asia/Kuwait', BAH: 'Asia/Bahrain',
+    AMM: 'Asia/Amman',
+    // Europe
+    LHR: 'Europe/London', LGW: 'Europe/London', STN: 'Europe/London', LTN: 'Europe/London',
+    LCY: 'Europe/London', MAN: 'Europe/London', BHX: 'Europe/London', EDI: 'Europe/London',
+    GLA: 'Europe/London', DUB: 'Europe/Dublin',
+    CDG: 'Europe/Paris', ORY: 'Europe/Paris', NCE: 'Europe/Paris', LYS: 'Europe/Paris',
+    FRA: 'Europe/Berlin', MUC: 'Europe/Berlin', BER: 'Europe/Berlin', HAM: 'Europe/Berlin', DUS: 'Europe/Berlin',
+    AMS: 'Europe/Amsterdam', BRU: 'Europe/Brussels', ZRH: 'Europe/Zurich', GVA: 'Europe/Zurich',
+    VIE: 'Europe/Vienna', MAD: 'Europe/Madrid', BCN: 'Europe/Madrid',
+    FCO: 'Europe/Rome', MXP: 'Europe/Rome', VCE: 'Europe/Rome',
+    LIS: 'Europe/Lisbon', OPO: 'Europe/Lisbon', ATH: 'Europe/Athens',
+    IST: 'Europe/Istanbul', SAW: 'Europe/Istanbul',
+    CPH: 'Europe/Copenhagen', ARN: 'Europe/Stockholm', OSL: 'Europe/Oslo', HEL: 'Europe/Helsinki',
+    WAW: 'Europe/Warsaw', PRG: 'Europe/Prague', BUD: 'Europe/Budapest',
+    // North America (US & Canada)
+    JFK: 'America/New_York', EWR: 'America/New_York', LGA: 'America/New_York', BOS: 'America/New_York',
+    IAD: 'America/New_York', MIA: 'America/New_York', MCO: 'America/New_York', ATL: 'America/New_York',
+    ORD: 'America/Chicago', DFW: 'America/Chicago', IAH: 'America/Chicago',
+    DEN: 'America/Denver',
+    LAX: 'America/Los_Angeles', SFO: 'America/Los_Angeles', SEA: 'America/Los_Angeles', LAS: 'America/Los_Angeles',
+    YYZ: 'America/Toronto', YUL: 'America/Toronto', YVR: 'America/Vancouver', YYC: 'America/Edmonton',
+    MEX: 'America/Mexico_City', CUN: 'America/Cancun',
+    // Australia & New Zealand & Pacific
+    SYD: 'Australia/Sydney', MEL: 'Australia/Melbourne', BNE: 'Australia/Brisbane',
+    PER: 'Australia/Perth', ADL: 'Australia/Adelaide', OOL: 'Australia/Brisbane',
+    AKL: 'Pacific/Auckland', CHC: 'Pacific/Auckland', WLG: 'Pacific/Auckland',
+    // Africa & South America
+    CAI: 'Africa/Cairo', JNB: 'Africa/Johannesburg', CPT: 'Africa/Johannesburg', NBO: 'Africa/Nairobi',
+    GRU: 'America/Sao_Paulo', EZE: 'America/Argentina/Buenos_Aires'
+};
+
+/**
+ * Fallback country timezone map when airport code is not in list but country name appears in text
+ */
+export const COUNTRY_TIMEZONES = {
+    'myanmar': 'Asia/Yangon', 'burma': 'Asia/Yangon',
+    'thailand': 'Asia/Bangkok',
+    'singapore': 'Asia/Singapore',
+    'malaysia': 'Asia/Kuala_Lumpur',
+    'vietnam': 'Asia/Ho_Chi_Minh',
+    'indonesia': 'Asia/Jakarta',
+    'philippines': 'Asia/Manila',
+    'cambodia': 'Asia/Phnom_Penh',
+    'laos': 'Asia/Vientiane',
+    'japan': 'Asia/Tokyo',
+    'korea': 'Asia/Seoul', 'south korea': 'Asia/Seoul',
+    'china': 'Asia/Shanghai',
+    'taiwan': 'Asia/Taipei',
+    'hong kong': 'Asia/Hong_Kong',
+    'macau': 'Asia/Macau',
+    'india': 'Asia/Kolkata',
+    'united arab emirates': 'Asia/Dubai', 'uae': 'Asia/Dubai', 'dubai': 'Asia/Dubai',
+    'qatar': 'Asia/Qatar',
+    'saudi arabia': 'Asia/Riyadh',
+    'united kingdom': 'Europe/London', 'uk': 'Europe/London', 'england': 'Europe/London', 'scotland': 'Europe/London',
+    'france': 'Europe/Paris',
+    'germany': 'Europe/Berlin',
+    'italy': 'Europe/Rome',
+    'spain': 'Europe/Madrid',
+    'switzerland': 'Europe/Zurich',
+    'netherlands': 'Europe/Amsterdam',
+    'belgium': 'Europe/Brussels',
+    'austria': 'Europe/Vienna',
+    'turkey': 'Europe/Istanbul',
+    'greece': 'Europe/Athens',
+    'united states': 'America/New_York', 'usa': 'America/New_York',
+    'canada': 'America/Toronto',
+    'australia': 'Australia/Sydney',
+    'new zealand': 'Pacific/Auckland'
+};
+
+/**
+ * Static baseline UTC offsets (in hours) as instant fast-lookup
+ */
+export const AIRPORT_TIMEZONE_OFFSETS = {
+    // Myanmar (UTC+6:30)
+    RGN: 6.5, MDL: 6.5, NYT: 6.5,
+    // Thailand (UTC+7)
+    BKK: 7, DMK: 7, CNX: 7, CEI: 7, HKT: 7, KBV: 7, HDY: 7, UTH: 7,
+    // Vietnam (UTC+7)
+    HAN: 7, SGN: 7, DAD: 7, CXR: 7, PQC: 7, HPH: 7, VCA: 7, HUI: 7, VII: 7, DLI: 7,
+    UIH: 7, BMV: 7, PXU: 7, VDH: 7, VCL: 7, VCS: 7, DIN: 7, VKG: 7, CAH: 7, VDO: 7,
+    // Cambodia, Laos, Western Indonesia (UTC+7)
+    PNH: 7, REP: 7, VTE: 7, CGK: 7, SUB: 7,
+    // Singapore, Malaysia, Central Indonesia, Philippines, Taiwan, Hong Kong, Macau, China, Western Australia (UTC+8)
+    SIN: 8,
+    KUL: 8, JHB: 8, PEN: 8, LGK: 8, BKI: 8, KCH: 8, MYY: 8, SBW: 8, TWU: 8, SDK: 8,
+    DPS: 8, MNL: 8, CEB: 8,
+    HKG: 8, MFM: 8, TPE: 8, TSA: 8, KHH: 8,
+    PVG: 8, SHA: 8, CAN: 8, PEK: 8, PKX: 8, SZX: 8, CTU: 8, CKG: 8, KMG: 8, XIY: 8,
+    PER: 8,
+    // Japan, South Korea (UTC+9)
+    NRT: 9, HND: 9, KIX: 9, NGO: 9, FUK: 9, CTS: 9, OKA: 9,
+    ICN: 9, GMP: 9, PUS: 9, CJU: 9,
+    // India & Sri Lanka (UTC+5:30)
+    DEL: 5.5, BOM: 5.5, MAA: 5.5, BLR: 5.5, HYD: 5.5, CCU: 5.5, CMB: 5.5,
+    DAC: 6, KTM: 5.75, MLE: 5,
+    // Middle East
+    DXB: 4, AUH: 4, DOH: 3, RUH: 3, JED: 3, MCT: 4, KWI: 3, BAH: 3, AMM: 3,
+    // UK & Western Europe
+    LHR: 1, LGW: 1, STN: 1, LTN: 1, LCY: 1, MAN: 1, BHX: 1, EDI: 1, GLA: 1, DUB: 1,
+    CDG: 2, ORY: 2, NCE: 2, FRA: 2, MUC: 2, BER: 2, AMS: 2, BRU: 2, ZRH: 2, GVA: 2,
+    VIE: 2, MAD: 2, BCN: 2, FCO: 2, MXP: 2, LIS: 1, ATH: 3, IST: 3, SAW: 3,
+    CPH: 2, ARN: 2, OSL: 2, HEL: 3, WAW: 2, PRG: 2, BUD: 2,
+    // North America (Standard baseline)
+    JFK: -4, EWR: -4, LGA: -4, BOS: -4, IAD: -4, MIA: -4, MCO: -4, ATL: -4, YYZ: -4, YUL: -4,
+    ORD: -5, DFW: -5, IAH: -5,
+    DEN: -6, YYC: -6,
+    LAX: -7, SFO: -7, SEA: -7, LAS: -7, YVR: -7,
+    MEX: -6, CUN: -5,
+    // Australia & NZ
+    SYD: 10, MEL: 10, BNE: 10, ADL: 9.5, OOL: 10,
+    AKL: 12, CHC: 12, WLG: 12,
+    // Africa & South America
+    CAI: 3, JNB: 2, CPT: 2, NBO: 3, GRU: -3, EZE: -3
+};
+
+/**
+ * Resolves accurate UTC offset (in decimal hours) for any airport code, city, or country worldwide
+ */
+export function resolveTimezoneOffsetHours(airportOrCode, dateObj = null) {
+    if (!airportOrCode) return 7; // default southeast asia
+    const str = String(airportOrCode).trim();
+    const code = (str.length === 3 && str === str.toUpperCase()) ? str : lookupAirportCode(str);
+
+    // 1. Check IANA timezone by airport code
+    const ianaTz = AIRPORT_IANA_TIMEZONES[code];
+    if (ianaTz && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+        try {
+            const d = dateObj || new Date();
+            const parts = new Intl.DateTimeFormat('en-US', { timeZone: ianaTz, timeZoneName: 'shortOffset' }).formatToParts(d);
+            const val = parts.find(p => p.type === 'timeZoneName')?.value;
+            if (!val || val === 'GMT' || val === 'UTC') return 0;
+            const m = val.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+            if (m) {
+                const sign = m[1] === '-' ? -1 : 1;
+                const hrs = parseInt(m[2], 10);
+                const mins = parseInt(m[3] || '0', 10);
+                return sign * (hrs + mins / 60);
+            }
+        } catch (e) {}
+    }
+
+    // 2. Check static AIRPORT_TIMEZONE_OFFSETS table
+    if (code && AIRPORT_TIMEZONE_OFFSETS[code] !== undefined) {
+        return AIRPORT_TIMEZONE_OFFSETS[code];
+    }
+
+    // 3. Fallback: match country name in text
+    const lower = str.toLowerCase();
+    for (const [country, countryTz] of Object.entries(COUNTRY_TIMEZONES)) {
+        if (lower.includes(country)) {
+            if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+                try {
+                    const d = dateObj || new Date();
+                    const parts = new Intl.DateTimeFormat('en-US', { timeZone: countryTz, timeZoneName: 'shortOffset' }).formatToParts(d);
+                    const val = parts.find(p => p.type === 'timeZoneName')?.value;
+                    if (!val || val === 'GMT' || val === 'UTC') return 0;
+                    const m = val.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+                    if (m) {
+                        return (m[1] === '-' ? -1 : 1) * (parseInt(m[2], 10) + parseInt(m[3] || '0', 10) / 60);
+                    }
+                } catch (e) {}
+            }
+        }
+    }
+
+    return 7; // Default Southeast Asia UTC+7
+}
+
+export function cleanVietnameseAirportText(name) {
+    if (!name) return '';
+    return String(name)
+        .replace(/Ph[uú]\s*Qu\s*[oôốồổỗộ][\u0300-\u036f]*\s*c/gi, 'Phu Quoc')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\u0111/g, 'd')
+        .replace(/\u0110/g, 'D')
+        .replace(/Phu\s*Qu\s*o\s*c/gi, 'Phu Quoc')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 
 export function lookupAirportCode(name) {
     if (!name) return '';
     const parenthesized = name.match(/\(([A-Z]{3})\)/);
     if (parenthesized) return parenthesized[1];
 
+    const clean = cleanVietnameseAirportText(name).toLowerCase();
+    for (const [key, code] of Object.entries(AIRPORT_CODE_MAP)) {
+        if (clean.includes(key)) return code;
+    }
     const lower = name.toLowerCase();
     for (const [key, code] of Object.entries(AIRPORT_CODE_MAP)) {
         if (lower.includes(key)) return code;
@@ -242,35 +593,153 @@ export function lookupAirportCode(name) {
 
 export function extractCityName(name) {
     if (!name) return '';
+    const clean = cleanVietnameseAirportText(name);
+    const cleanLower = clean.toLowerCase();
     const lower = name.toLowerCase();
-    if (lower.includes('tan son nhat') || lower.includes('ho chi minh') || lower.includes('saigon')) return 'Ho Chi Minh City';
-    if (lower.includes('phu quoc') || lower.includes('phú quốc')) return 'Phu Quoc';
-    if (lower.includes('noi bai') || lower.includes('hanoi') || lower.includes('ha noi')) return 'Hanoi';
-    if (lower.includes('da nang')) return 'Da Nang';
-    if (lower.includes('cam ranh') || lower.includes('nha trang')) return 'Nha Trang';
-    if (lower.includes('klia') || lower.includes('kuala lumpur')) return 'Kuala Lumpur';
-    if (lower.includes('senai') || lower.includes('johor bahru')) return 'Johor Bahru';
-    if (lower.includes('suvarnabhumi') || lower.includes('don mueang') || lower.includes('bangkok')) return 'Bangkok';
-    if (lower.includes('yangon')) return 'Yangon';
-    if (lower.includes('mandalay')) return 'Mandalay';
-    if (lower.includes('narita') || lower.includes('haneda') || lower.includes('tokyo')) return 'Tokyo';
-    if (lower.includes('taipei') || lower.includes('taoyuan') || lower.includes('songshan')) return 'Taipei';
-    if (lower.includes('kaohsiung')) return 'Kaohsiung';
-    if (lower.includes('singapore') || lower.includes('changi')) return 'Singapore';
-    if (lower.includes('incheon') || lower.includes('seoul')) return 'Seoul';
-    if (lower.includes('kansai') || lower.includes('osaka')) return 'Osaka';
-    if (lower.includes('london') || lower.includes('heathrow') || lower.includes('gatwick')) return 'London';
-    if (lower.includes('paris') || lower.includes('charles de gaulle')) return 'Paris';
-    if (lower.includes('frankfurt')) return 'Frankfurt';
-    if (lower.includes('zurich')) return 'Zurich';
-    if (lower.includes('sydney')) return 'Sydney';
-    if (lower.includes('melbourne')) return 'Melbourne';
 
-    return name
+    if (cleanLower.includes('phu quoc') || lower.includes('phu quoc') || lower.includes('phú quốc')) return 'Phu Quoc';
+    if (cleanLower.includes('da nang') || cleanLower.includes('danang') || lower.includes('da nang')) return 'Da Nang';
+    if (cleanLower.includes('mae fah luang') || cleanLower.includes('chiang rai')) return 'Chiang Rai';
+    if (cleanLower.includes('chiang mai')) return 'Chiang Mai';
+    if (cleanLower.includes('tan son nhat') || cleanLower.includes('ho chi minh') || cleanLower.includes('saigon')) return 'Ho Chi Minh City';
+    if (cleanLower.includes('noi bai') || cleanLower.includes('hanoi') || cleanLower.includes('ha noi')) return 'Hanoi';
+    if (cleanLower.includes('cam ranh') || cleanLower.includes('nha trang')) return 'Nha Trang';
+    if (cleanLower.includes('klia') || cleanLower.includes('kuala lumpur')) return 'Kuala Lumpur';
+    if (cleanLower.includes('senai') || cleanLower.includes('johor bahru')) return 'Johor Bahru';
+    if (cleanLower.includes('suvarnabhumi') || cleanLower.includes('don mueang') || cleanLower.includes('bangkok')) return 'Bangkok';
+    if (cleanLower.includes('phuket')) return 'Phuket';
+    if (cleanLower.includes('yangon')) return 'Yangon';
+    if (cleanLower.includes('mandalay')) return 'Mandalay';
+    if (cleanLower.includes('narita') || cleanLower.includes('haneda') || cleanLower.includes('tokyo')) return 'Tokyo';
+    if (cleanLower.includes('taipei') || cleanLower.includes('taoyuan') || cleanLower.includes('songshan')) return 'Taipei';
+    if (cleanLower.includes('kaohsiung')) return 'Kaohsiung';
+    if (cleanLower.includes('singapore') || cleanLower.includes('changi')) return 'Singapore';
+    if (cleanLower.includes('incheon') || cleanLower.includes('seoul')) return 'Seoul';
+    if (cleanLower.includes('kansai') || cleanLower.includes('osaka')) return 'Osaka';
+    if (cleanLower.includes('london') || cleanLower.includes('heathrow') || cleanLower.includes('gatwick')) return 'London';
+    if (cleanLower.includes('paris') || cleanLower.includes('charles de gaulle')) return 'Paris';
+    if (cleanLower.includes('frankfurt')) return 'Frankfurt';
+    if (cleanLower.includes('zurich')) return 'Zurich';
+    if (cleanLower.includes('sydney')) return 'Sydney';
+    if (cleanLower.includes('melbourne')) return 'Melbourne';
+
+    return clean
         .replace(/\([A-Z]{3}\)/g, '')
         .replace(/\s*(?:International|Airport|Airfield|Senai|Terminal\s*[0-9A-Z]+|T\d+).*/i, '')
         .replace(/[,\-\/]+$/, '')
         .trim();
+}
+
+/**
+ * Helper to parse date string + time string into a structured object
+ */
+export function parseFlightDateTime(dateStr, timeStr) {
+    if (!timeStr) return null;
+    const timeMatch = String(timeStr).match(/(\d{1,2})\s*[:.∶：]\s*(\d{2})/);
+    if (!timeMatch) return null;
+    const hours = parseInt(timeMatch[1], 10);
+    const minutes = parseInt(timeMatch[2], 10);
+
+    const months = {
+        jan: 0, january: 0,
+        feb: 1, february: 1,
+        mar: 2, march: 2,
+        apr: 3, april: 3,
+        may: 4,
+        jun: 5, june: 5,
+        jul: 6, july: 6,
+        aug: 7, august: 7,
+        sep: 8, september: 8,
+        oct: 9, october: 9,
+        nov: 10, november: 10,
+        dec: 11, december: 11
+    };
+
+    if (dateStr) {
+        const clean = String(dateStr).replace(/^[A-Za-z]+day,?\s*/i, '').trim();
+
+        // Month DD, YYYY or Month DD YYYY
+        let m = clean.match(/([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})/);
+        if (m && months[m[1].toLowerCase()] !== undefined) {
+            return { year: parseInt(m[3], 10), month: months[m[1].toLowerCase()], day: parseInt(m[2], 10), hours, minutes };
+        }
+
+        // DD Month YYYY or DD Month, YYYY
+        m = clean.match(/(\d{1,2})\s+([A-Za-z]+),?\s*(\d{4})/);
+        if (m && months[m[2].toLowerCase()] !== undefined) {
+            return { year: parseInt(m[3], 10), month: months[m[2].toLowerCase()], day: parseInt(m[1], 10), hours, minutes };
+        }
+
+        // DD-MM-YYYY or DD/MM/YYYY
+        m = clean.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+        if (m) {
+            return { year: parseInt(m[3], 10), month: parseInt(m[2], 10) - 1, day: parseInt(m[1], 10), hours, minutes };
+        }
+
+        // YYYY-MM-DD or YYYY/MM/DD
+        m = clean.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+        if (m) {
+            return { year: parseInt(m[1], 10), month: parseInt(m[2], 10) - 1, day: parseInt(m[3], 10), hours, minutes };
+        }
+    }
+    return null;
+}
+
+/**
+ * Calculate accurate flight duration considering airport timezones and cross-day arrivals
+ */
+export function calculateFlightDuration(depAirportOrCode, depDateStr, depTimeStr, arrAirportOrCode, arrDateStr, arrTimeStr, fallback = '2h 30min, Non-Stop') {
+    const depCode = (depAirportOrCode && depAirportOrCode.length === 3 && depAirportOrCode === depAirportOrCode.toUpperCase())
+        ? depAirportOrCode
+        : lookupAirportCode(depAirportOrCode);
+
+    const arrCode = (arrAirportOrCode && arrAirportOrCode.length === 3 && arrAirportOrCode === arrAirportOrCode.toUpperCase())
+        ? arrAirportOrCode
+        : lookupAirportCode(arrAirportOrCode);
+
+    const depParts = parseFlightDateTime(depDateStr, depTimeStr);
+    const arrParts = parseFlightDateTime(arrDateStr, arrTimeStr);
+
+    const depDateObj = depParts ? new Date(depParts.year, depParts.month, depParts.day, depParts.hours, depParts.minutes) : null;
+    const arrDateObj = arrParts ? new Date(arrParts.year, arrParts.month, arrParts.day, arrParts.hours, arrParts.minutes) : null;
+
+    const depOffset = resolveTimezoneOffsetHours(depCode || depAirportOrCode, depDateObj);
+    const arrOffset = resolveTimezoneOffsetHours(arrCode || arrAirportOrCode, arrDateObj || depDateObj);
+
+    if (depParts && arrParts) {
+        const depUtc = Date.UTC(depParts.year, depParts.month, depParts.day, depParts.hours, depParts.minutes) - (depOffset * 3600000);
+        const arrUtc = Date.UTC(arrParts.year, arrParts.month, arrParts.day, arrParts.hours, arrParts.minutes) - (arrOffset * 3600000);
+
+        let diffMinutes = Math.round((arrUtc - depUtc) / 60000);
+
+        // If dates matched exactly but flight arrived earlier or overnight with same date specified in error
+        if (diffMinutes <= 0 && depDateStr === arrDateStr) {
+            diffMinutes += 24 * 60;
+        }
+
+        if (diffMinutes > 0 && diffMinutes < 1440 * 2) {
+            const hours = Math.floor(diffMinutes / 60);
+            const mins = diffMinutes % 60;
+            return mins > 0 ? `${hours}h ${mins}min, Non-Stop` : `${hours}h, Non-Stop`;
+        }
+    } else if (depTimeStr && arrTimeStr) {
+        // Approximate time-only fallback with timezones
+        const t1 = depTimeStr.match(/(\d{1,2})\s*[:.∶：]\s*(\d{2})/);
+        const t2 = arrTimeStr.match(/(\d{1,2})\s*[:.∶：]\s*(\d{2})/);
+        if (t1 && t2) {
+            let m1 = parseInt(t1[1], 10) * 60 + parseInt(t1[2], 10) - Math.round(depOffset * 60);
+            let m2 = parseInt(t2[1], 10) * 60 + parseInt(t2[2], 10) - Math.round(arrOffset * 60);
+            let diff = m2 - m1;
+            if (diff <= 0) diff += 24 * 60;
+            if (diff > 0 && diff < 1440) {
+                const hours = Math.floor(diff / 60);
+                const mins = diff % 60;
+                return mins > 0 ? `${hours}h ${mins}min, Non-Stop` : `${hours}h, Non-Stop`;
+            }
+        }
+    }
+
+    return fallback;
 }
 
 /**
@@ -290,6 +759,37 @@ export function formatCheckedBaggageLine(val) {
     }
     const firstLine = val.split(/[\r\n]+/)[0].trim();
     return `Checked: ${firstLine}   |   Carry-on: 7 kg`;
+}
+
+/**
+ * Format route into clean compact standard format: City (CODE) - City (CODE)
+ */
+export function formatRouteCompact(routeStr, depAirport = '', arrAirport = '') {
+    if (!routeStr) {
+        const dCode = lookupAirportCode(depAirport) || 'DEP';
+        const aCode = lookupAirportCode(arrAirport) || 'ARR';
+        const dCity = extractCityName(depAirport) || dCode;
+        const aCity = extractCityName(arrAirport) || aCode;
+        return `${dCity} (${dCode}) - ${aCity} (${aCode})`;
+    }
+
+    const trimmed = String(routeStr).trim();
+    // If it is already clean airport codes or concise: e.g. "CEI - SIN" or "Chiang Rai (CEI) - Singapore (SIN)"
+    const match = trimmed.match(/^([^-\u2013\u2014]+)\s*[-\u2013\u2014]\s*([^-\u2013\u2014]+)$/);
+    if (!match) return trimmed;
+
+    const part1 = match[1].trim();
+    const part2 = match[2].trim();
+
+    const c1 = extractCityName(part1) || extractCityName(depAirport) || part1;
+    const code1 = lookupAirportCode(part1) || lookupAirportCode(depAirport) || '';
+
+    const c2 = extractCityName(part2) || extractCityName(arrAirport) || part2;
+    const code2 = lookupAirportCode(part2) || lookupAirportCode(arrAirport) || '';
+
+    const left = code1 ? `${c1} (${code1})` : c1;
+    const right = code2 ? `${c2} (${code2})` : c2;
+    return `${left} - ${right}`;
 }
 
 /**
@@ -613,6 +1113,8 @@ export function parseItineraryText(rawText) {
             airport += ' Airport';
         }
 
+        airport = cleanVietnameseAirportText(airport);
+
         return { time, dateRaw, terminal, airport };
     }
 
@@ -653,11 +1155,22 @@ export function parseItineraryText(rawText) {
         const classMatch = tfText.match(/Class\s*[:\s]*([A-Za-z0-9\s\(\)]+?)(?=\s+Route|\n|$)/i) || tfText.match(/Class\s*\n\s*([^\n\r]+)/i);
         const routeCodeMatch = tfText.match(/Route\s*[:\s]*([A-Z]{3}\s*-\s*[A-Z]{3})/i) || tfText.match(/Route\s*\n\s*([^\n\r]+)/i);
 
-        const duration = durationMatch ? durationMatch[1].trim() : (airline === 'Scoot' ? '3h 30min, Non-Stop' : (airline === 'EVA Air' ? '3h 40min, Non-Stop' : (airline === 'Singapore Airlines' ? '13h 30min, Non-Stop' : '12h 30min, Non-Stop')));
+        const calculatedDur = calculateFlightDuration(
+            depAirport || depCity,
+            depDateFormatted,
+            depTime,
+            arrAirport || arrCity,
+            arrDateFormatted,
+            arrTime,
+            (airline === 'Scoot' ? '3h 30min, Non-Stop' : (airline === 'EVA Air' ? '3h 40min, Non-Stop' : (airline === 'Singapore Airlines' ? '13h 30min, Non-Stop' : '12h 30min, Non-Stop')))
+        );
+        const duration = durationMatch ? durationMatch[1].trim() : calculatedDur;
         const aircraft = aircraftMatch ? aircraftMatch[1].trim() : (airline === 'Scoot' ? 'Airbus A320neo' : (airline === 'EVA Air' ? 'Boeing 787-10' : (airline === 'Singapore Airlines' ? 'Airbus A380-800' : 'Boeing 777-300ER')));
         const secClass = classMatch ? classMatch[1].trim() : flightClass;
+        const depCodeClean = lookupAirportCode(depAirport) || lookupAirportCode(depCity) || 'DEP';
+        const arrCodeClean = lookupAirportCode(arrAirport) || lookupAirportCode(arrCity) || 'ARR';
         const defaultRoute = (airline === 'Scoot' ? 'SIN - DMK' : (airline === 'EVA Air' ? 'TPE - BKK' : (airline === 'Singapore Airlines' ? 'SIN - LHR' : 'BKK - LHR')));
-        const route = routeCodeMatch ? routeCodeMatch[1].trim() : (depCity && arrCity ? `${depCity} - ${arrCity}` : defaultRoute);
+        const route = routeCodeMatch ? routeCodeMatch[1].trim() : (depCity && arrCity ? `${depCity} (${depCodeClean}) - ${arrCity} (${arrCodeClean})` : defaultRoute);
 
         const airportMatches = [...tfText.matchAll(/([A-Za-z\s\-]+?\([A-Z]{3}\)(?:,\s*Terminal\s*[0-9A-Z]+)?)/gi)];
         if (airportMatches && airportMatches.length >= 2) {
@@ -715,10 +1228,20 @@ export function parseItineraryText(rawText) {
             if (arrAirport && arrCode && !arrAirport.includes(`(${arrCode})`)) arrAirport += ` (${arrCode})`;
             const depCity = extractCityName(dep.airport);
             const arrCity = extractCityName(arr.airport);
-            const route = `${depCity || 'DEP'} (${depCode || 'DEP'}) - ${arrCity || 'ARR'} (${arrCode || 'ARR'})`;
+            const route = `${depCity || depCode || 'DEP'} (${depCode || 'DEP'}) - ${arrCity || arrCode || 'ARR'} (${arrCode || 'ARR'})`;
 
             const defaultCarrier = airline === 'EVA Air' ? 'EVA Air' : (airline === 'Singapore Airlines' ? 'Singapore Airlines' : (airline === 'Thai Airways' ? 'Thai Airways International' : (airline === 'VietJet Air' ? 'VietJet Air' : 'AirAsia Berhad')));
             const defaultFlightNo = airline === 'EVA Air' ? 'BR 001' : (airline === 'Singapore Airlines' ? 'SQ 001' : (airline === 'Thai Airways' ? 'TG 910' : ''));
+
+            const singleDuration = calculateFlightDuration(
+                depCode || dep.airport,
+                dep.dateRaw,
+                dep.time,
+                arrCode || arr.airport,
+                arr.dateRaw,
+                arr.time,
+                '2h 30min, Non-Stop'
+            );
 
             flights.push({
                 flightNo: defaultFlightNo,
@@ -732,7 +1255,7 @@ export function parseItineraryText(rawText) {
                 arrAirport,
                 arrTerminal: arr.terminal,
                 route,
-                duration: '12h 30min, Non-Stop',
+                duration: singleDuration,
                 aircraft: 'Boeing 777-300ER',
                 flightClass
             });
@@ -797,7 +1320,7 @@ export function parseItineraryText(rawText) {
                 
                 const depCity = extractCityName(dep.airport);
                 const arrCity = extractCityName(arr.airport);
-                let route = `${depCity || 'DEP'} (${depCode || 'DEP'}) - ${arrCity || 'ARR'} (${arrCode || 'ARR'})`;
+                let route = `${depCity || depCode || 'DEP'} (${depCode || 'DEP'}) - ${arrCity || arrCode || 'ARR'} (${arrCode || 'ARR'})`;
                 if ((!depCity || !arrCity) && sectorHeader) {
                     route = sectorHeader;
                 }
@@ -806,7 +1329,15 @@ export function parseItineraryText(rawText) {
                 const aircraft = acMatch ? acMatch[1].trim() : 'Boeing 777-300ER';
 
                 const durMatch = segmentText.match(/(\d+h\s*\d+m(?:in)?)/i);
-                const duration = durMatch ? durMatch[1].trim() : '12h 30min, Non-Stop';
+                const sectorDuration = durMatch ? durMatch[1].trim() : calculateFlightDuration(
+                    depCode || dep.airport,
+                    dep.dateRaw,
+                    dep.time,
+                    arrCode || arr.airport,
+                    arr.dateRaw,
+                    arr.time,
+                    '2h 30min, Non-Stop'
+                );
                 
                 flights.push({
                     sectorHeader,
@@ -821,7 +1352,7 @@ export function parseItineraryText(rawText) {
                     arrAirport,
                     arrTerminal: arr.terminal,
                     route,
-                    duration,
+                    duration: sectorDuration,
                     aircraft,
                     flightClass
                 });
@@ -1800,7 +2331,7 @@ export async function generateEvaAirPdfDoc(data) {
         const sArrCity = extractCityName(f.arrAirport) || 'Bangkok';
         let sArrAirport = f.arrAirport || '';
         if (f.arrTerminal) sArrAirport += `, ${f.arrTerminal}`;
-        const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'TPE'} - ${lookupAirportCode(f.arrAirport) || 'BKK'}`;
+        const sRoute = formatRouteCompact(f.route, f.depAirport, f.arrAirport);
         const sFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'BR 001';
 
         // Green Card Top Bar + Upper section
@@ -1924,7 +2455,19 @@ export async function generateEvaAirPdfDoc(data) {
         doc.setFont("helvetica", "bold");
         doc.text("Route", v2 + 6, curY + 33.5);
         doc.setFont("helvetica", "normal");
-        doc.text(sRoute, v3 + 6, curY + 33.5, { maxWidth: 175 });
+        
+        let rFontSize = 8.5;
+        doc.setFontSize(rFontSize);
+        while (doc.getTextWidth(sRoute) > 175 && rFontSize > 6.8) {
+            rFontSize -= 0.3;
+            doc.setFontSize(rFontSize);
+        }
+        const routeLines = doc.splitTextToSize(sRoute, 175);
+        if (routeLines.length > 1) {
+            doc.text(routeLines, v3 + 6, curY + 29.5, { maxWidth: 175, lineHeightFactor: 1.15 });
+        } else {
+            doc.text(sRoute, v3 + 6, curY + 33.5, { maxWidth: 175 });
+        }
 
         curY += infoTableH + 20;
     });
@@ -2413,8 +2956,19 @@ export async function generateSingaporeAirlinesPdfDoc(data) {
         doc.setFont("helvetica", "bold");
         doc.text("Route", 297.6 + 6, r2Y + 13.5);
         doc.setFont("helvetica", "normal");
-        const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'LHR'}`;
-        doc.text(sRoute, 377.0 + 6, r2Y + 13.5, { maxWidth: 160 });
+        const sRoute = formatRouteCompact(f.route, f.depAirport, f.arrAirport);
+        let rFontSize = 8.5;
+        doc.setFontSize(rFontSize);
+        while (doc.getTextWidth(sRoute) > 160 && rFontSize > 6.8) {
+            rFontSize -= 0.3;
+            doc.setFontSize(rFontSize);
+        }
+        const routeLines = doc.splitTextToSize(sRoute, 160);
+        if (routeLines.length > 1) {
+            doc.text(routeLines, 377.0 + 6, r2Y + 9.5, { maxWidth: 160, lineHeightFactor: 1.15 });
+        } else {
+            doc.text(sRoute, 377.0 + 6, r2Y + 13.5, { maxWidth: 160 });
+        }
 
         curY += lowerBoxH + 20;
     });
@@ -2802,7 +3356,7 @@ export async function generateScootPdfDoc(data) {
         const sArrCity = extractCityName(f.arrAirport) || 'Bangkok';
         let sArrAirport = f.arrAirport || '';
         if (f.arrTerminal) sArrAirport += `, ${f.arrTerminal}`;
-        const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'DMK'}`;
+        const sRoute = formatRouteCompact(f.route, f.depAirport, f.arrAirport);
         const sFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'TR 001';
 
         // Dark Card Top Bar + Upper section
@@ -2926,7 +3480,19 @@ export async function generateScootPdfDoc(data) {
         doc.setFont("helvetica", "bold");
         doc.text("Route", v2 + 6, curY + 33.5);
         doc.setFont("helvetica", "normal");
-        doc.text(sRoute, v3 + 6, curY + 33.5, { maxWidth: 175 });
+        
+        let rFontSize = 8.5;
+        doc.setFontSize(rFontSize);
+        while (doc.getTextWidth(sRoute) > 175 && rFontSize > 6.8) {
+            rFontSize -= 0.3;
+            doc.setFontSize(rFontSize);
+        }
+        const routeLines = doc.splitTextToSize(sRoute, 175);
+        if (routeLines.length > 1) {
+            doc.text(routeLines, v3 + 6, curY + 29.5, { maxWidth: 175, lineHeightFactor: 1.15 });
+        } else {
+            doc.text(sRoute, v3 + 6, curY + 33.5, { maxWidth: 175 });
+        }
 
         curY += infoTableH + 20;
     });
@@ -3874,7 +4440,7 @@ export function renderEvaAirTicketHtml(data) {
                 const fArrCity = extractCityName(f.arrAirport) || 'Bangkok';
                 let fArrAirport = f.arrAirport || '';
                 if (f.arrTerminal) fArrAirport += `, ${f.arrTerminal}`;
-                const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'TPE'} - ${lookupAirportCode(f.arrAirport) || 'BKK'}`;
+                const sRoute = formatRouteCompact(f.route, f.depAirport, f.arrAirport);
                 const fFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'BR 001';
                 const fPnr = f.pnr || pnr;
 
@@ -3915,18 +4481,18 @@ export function renderEvaAirTicketHtml(data) {
                     </div>
 
                     <!-- 2x4 Info Table with Light Orange Background & Orange Borders -->
-                    <table style="width:100%; border-collapse:collapse; background:#FEF4EC; border-top:1px solid #F26522; font-size:11px;">
+                    <table style="width:100%; border-collapse:collapse; background:#FEF4EC; border-top:1px solid #F26522; font-size:11px; table-layout:auto;">
                         <tr>
-                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:15%; font-weight:700; color:#333;">Duration</td>
-                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:35%; color:#222;">${f.duration || '3h 40min, Non-Stop'}</td>
-                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:15%; font-weight:700; color:#333;">Aircraft</td>
-                            <td style="padding:6px 10px; border-bottom:1px solid #F26522; width:35%; color:#222;">${f.aircraft || 'Boeing 787-10'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:15%; font-weight:700; color:#333; vertical-align:middle;">Duration</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:35%; color:#222; vertical-align:middle; line-height:1.3;">${f.duration || '3h 40min, Non-Stop'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; border-bottom:1px solid #F26522; width:15%; font-weight:700; color:#333; vertical-align:middle;">Aircraft</td>
+                            <td style="padding:6px 10px; border-bottom:1px solid #F26522; width:35%; color:#222; vertical-align:middle; line-height:1.3;">${f.aircraft || 'Boeing 787-10'}</td>
                         </tr>
                         <tr>
-                            <td style="padding:6px 10px; border-right:1px solid #F26522; font-weight:700; color:#333;">Class</td>
-                            <td style="padding:6px 10px; border-right:1px solid #F26522; color:#222;">${f.flightClass || 'Economy (Y)'}</td>
-                            <td style="padding:6px 10px; border-right:1px solid #F26522; font-weight:700; color:#333;">Route</td>
-                            <td style="padding:6px 10px; color:#222;">${sRoute}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; font-weight:700; color:#333; vertical-align:middle;">Class</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; color:#222; vertical-align:middle; line-height:1.3;">${f.flightClass || 'Economy (Y)'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #F26522; font-weight:700; color:#333; vertical-align:middle;">Route</td>
+                            <td style="padding:6px 10px; color:#222; vertical-align:middle; line-height:1.3; word-break:break-word;">${sRoute}</td>
                         </tr>
                     </table>
                 </div>
@@ -4074,7 +4640,7 @@ export function renderSingaporeAirlinesTicketHtml(data) {
                 const fArrCity = extractCityName(f.arrAirport) || 'London';
                 let fArrAirport = f.arrAirport || '';
                 if (f.arrTerminal) fArrAirport += `, ${f.arrTerminal}`;
-                const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'LHR'}`;
+                const sRoute = formatRouteCompact(f.route, f.depAirport, f.arrAirport);
 
                 const fFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'SQ 001';
                 const fPnr = f.pnr || pnr;
@@ -4114,18 +4680,18 @@ export function renderSingaporeAirlinesTicketHtml(data) {
                         </div>
                     </div>
                     <!-- Lower Light-Gold Info Table (2x4 Grid) -->
-                    <table style="width:100%; border-collapse:collapse; background:#FDF8EC; border-top:1px solid #E8A90C; font-size:11px;">
+                    <table style="width:100%; border-collapse:collapse; background:#FDF8EC; border-top:1px solid #E8A90C; font-size:11px; table-layout:auto;">
                         <tr>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Duration</td>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${f.duration || '13h 30min, Non-Stop'}</td>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Aircraft</td>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${f.aircraft || 'Airbus A380-800'}</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333; vertical-align:middle;">Duration</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333; vertical-align:middle; line-height:1.3;">${f.duration || '13h 30min, Non-Stop'}</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333; vertical-align:middle;">Aircraft</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333; vertical-align:middle; line-height:1.3;">${f.aircraft || 'Airbus A380-800'}</td>
                         </tr>
                         <tr>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Class</td>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${f.flightClass || data.flightClass || 'Economy (S)'}</td>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333;">Route</td>
-                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333;">${sRoute}</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333; vertical-align:middle;">Class</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333; vertical-align:middle; line-height:1.3;">${f.flightClass || data.flightClass || 'Economy (S)'}</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:16%; font-weight:700; color:#333; vertical-align:middle;">Route</td>
+                            <td style="padding:6px 10px; border:1px solid #E8A90C; width:34%; color:#333; vertical-align:middle; line-height:1.3; word-break:break-word;">${sRoute}</td>
                         </tr>
                     </table>
                 </div>
@@ -4272,7 +4838,7 @@ export function renderScootTicketHtml(data) {
                 const fArrCity = extractCityName(f.arrAirport) || 'Bangkok';
                 let fArrAirport = f.arrAirport || '';
                 if (f.arrTerminal) fArrAirport += `, ${f.arrTerminal}`;
-                const sRoute = f.route || `${lookupAirportCode(f.depAirport) || 'SIN'} - ${lookupAirportCode(f.arrAirport) || 'DMK'}`;
+                const sRoute = formatRouteCompact(f.route, f.depAirport, f.arrAirport);
                 const fFlightNo = (f.flightNo && !/^(AK|FD|VJ)/i.test(f.flightNo)) ? f.flightNo : 'TR 001';
                 const fPnr = f.pnr || pnr;
 
@@ -4313,18 +4879,18 @@ export function renderScootTicketHtml(data) {
                     </div>
 
                     <!-- 2x4 Info Table with Light Yellow Background & Yellow Borders -->
-                    <table style="width:100%; border-collapse:collapse; background:#FFFBEA; border-top:1px solid #FFE900; font-size:11px;">
+                    <table style="width:100%; border-collapse:collapse; background:#FFFBEA; border-top:1px solid #FFE900; font-size:11px; table-layout:auto;">
                         <tr>
-                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:15%; font-weight:700; color:#333;">Duration</td>
-                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:35%; color:#222;">${f.duration || '2h 30min, Non-Stop'}</td>
-                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:15%; font-weight:700; color:#333;">Aircraft</td>
-                            <td style="padding:6px 10px; border-bottom:1px solid #FFE900; width:35%; color:#222;">${f.aircraft || 'Airbus A320neo'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:15%; font-weight:700; color:#333; vertical-align:middle;">Duration</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:35%; color:#222; vertical-align:middle; line-height:1.3;">${f.duration || '2h 30min, Non-Stop'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; border-bottom:1px solid #FFE900; width:15%; font-weight:700; color:#333; vertical-align:middle;">Aircraft</td>
+                            <td style="padding:6px 10px; border-bottom:1px solid #FFE900; width:35%; color:#222; vertical-align:middle; line-height:1.3;">${f.aircraft || 'Airbus A320neo'}</td>
                         </tr>
                         <tr>
-                            <td style="padding:6px 10px; border-right:1px solid #FFE900; font-weight:700; color:#333;">Class</td>
-                            <td style="padding:6px 10px; border-right:1px solid #FFE900; color:#222;">${f.flightClass || 'Economy (Fly)'}</td>
-                            <td style="padding:6px 10px; border-right:1px solid #FFE900; font-weight:700; color:#333;">Route</td>
-                            <td style="padding:6px 10px; color:#222;">${sRoute}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; font-weight:700; color:#333; vertical-align:middle;">Class</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; color:#222; vertical-align:middle; line-height:1.3;">${f.flightClass || 'Economy (Fly)'}</td>
+                            <td style="padding:6px 10px; border-right:1px solid #FFE900; font-weight:700; color:#333; vertical-align:middle;">Route</td>
+                            <td style="padding:6px 10px; color:#222; vertical-align:middle; line-height:1.3; word-break:break-word;">${sRoute}</td>
                         </tr>
                     </table>
                 </div>
