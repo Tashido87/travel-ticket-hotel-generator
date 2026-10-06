@@ -172,11 +172,11 @@ body {
 
 /* Drop Zone */
 .airasia-upload-zone {
-    border: 2px dashed rgba(227, 30, 36, 0.35);
+    border: 2px dashed rgba(0, 113, 227, 0.4);
     border-radius: 14px;
     padding: 32px 20px;
     text-align: center;
-    background: rgba(227, 30, 36, 0.02);
+    background: rgba(0, 113, 227, 0.03);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 8px 0 18px;
@@ -184,14 +184,14 @@ body {
 
 .airasia-upload-zone:hover,
 .airasia-upload-zone.dragover {
-    border-color: var(--apple-red);
-    background: rgba(227, 30, 36, 0.06);
+    border-color: var(--apple-blue);
+    background: rgba(0, 113, 227, 0.07);
     transform: translateY(-1px);
 }
 
 .airasia-upload-icon {
     font-size: 2.6rem;
-    color: var(--apple-red);
+    color: var(--apple-blue);
     margin-bottom: 8px;
     display: block;
 }
@@ -234,15 +234,15 @@ body {
 }
 
 .btn-generate {
-    background: var(--apple-red);
-    border-color: var(--apple-red);
+    background: var(--apple-blue);
+    border-color: var(--apple-blue);
     color: #ffffff;
 }
 
 .btn-generate:hover {
-    background: var(--apple-red-hover);
-    border-color: var(--apple-red-hover);
-    box-shadow: 0 4px 12px rgba(225, 37, 27, 0.25);
+    background: var(--apple-blue-hover);
+    border-color: var(--apple-blue-hover);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
 }
 
 .btn-clear, .btn-secondary {
@@ -257,8 +257,8 @@ body {
 }
 
 .btn-primary {
-    background: var(--apple-red);
-    border-color: var(--apple-red);
+    background: var(--apple-blue);
+    border-color: var(--apple-blue);
     color: #ffffff;
     padding: 10px 20px;
     font-size: 0.88rem;
@@ -469,10 +469,10 @@ textarea:focus {
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
-    color: var(--apple-red);
+    color: var(--apple-blue);
     letter-spacing: 0.5px;
     margin-top: 8px;
-    border-bottom: 1px solid rgba(225, 37, 27, 0.2);
+    border-bottom: 1px solid rgba(0, 113, 227, 0.2);
     padding-bottom: 4px;
 }
 
