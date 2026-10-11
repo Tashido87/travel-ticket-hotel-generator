@@ -17,6 +17,16 @@ export const DESTINATION_PRESETS = {
         bookedPayableAddress: 'Agoda Company Pte, Ltd.\n30 Cecil Street, Prudential Tower #19-08,\nSingapore 049712',
         benefits: 'Express check-in, Free WiFi'
     },
+    'Chiang Mai': {
+        destination: 'Chiang Mai',
+        propertyName: 'Duangtawan Hotel Chiang Mai',
+        propertyAddress: '132 Loi Kroh Rd, Tambon, Chang Khlan, Chiang Mai,\nChiang Mai Province, 50100, Thailand',
+        propertyContact: '+66 53 905 000',
+        stampFile: 'agoda-stamp.png',
+        bookedPayableTitle: 'Booked And Payable By :',
+        bookedPayableAddress: 'Agoda Company Pte, Ltd.\n30 Cecil Street, Prudential Tower #19-08,\nSingapore 049712',
+        benefits: 'Express check-in, Free WiFi'
+    },
     Guangzhou: {
         destination: 'Guangzhou',
         propertyName: 'Grand Park Guangzhou Hotel',
@@ -46,8 +56,42 @@ export const DESTINATION_PRESETS = {
         bookedPayableTitle: 'Booked And Payable Through :',
         bookedPayableAddress: 'Agoda Company Pte, Ltd.\n36 Robinson Road, City House #20-01,\nSingapore 068877',
         benefits: 'Coffee & tea, Free pool access, Free fitness center access, Free WiFi, Parking'
+    },
+    Hanoi: {
+        destination: 'Hanoi',
+        propertyName: 'Alley Garden Hotel & Spa',
+        propertyAddress: '8 Ngõ 19 P. Nhà Chung, Hoàn Kiếm,\nHà Nội 100000, Vietnam',
+        propertyContact: '+84 985 436 518',
+        stampFile: 'agoda-stamp.png',
+        bookedPayableTitle: 'Booked And Payable By :',
+        bookedPayableAddress: 'Agoda Company Pte, Ltd.\n30 Cecil Street, Prudential Tower #19-08,\nSingapore 049712',
+        benefits: 'Express check-in, Free WiFi'
+    },
+    'Da Nang': {
+        destination: 'Da Nang',
+        propertyName: 'My Khe II Hotel',
+        propertyAddress: '260 Võ Nguyên Giáp, Phước Mỹ Ward,\nSơn Trà District, Da Nang City, Vietnam',
+        propertyContact: '+84 932 417 277',
+        stampFile: 'agoda-stamp.png',
+        bookedPayableTitle: 'Booked And Payable By :',
+        bookedPayableAddress: 'Agoda Company Pte, Ltd.\n30 Cecil Street, Prudential Tower #19-08,\nSingapore 049712',
+        benefits: 'Express check-in, Free WiFi'
+    },
+    'Ho Chi Minh': {
+        destination: 'Ho Chi Minh',
+        propertyName: 'Golden Lunar Hotel',
+        propertyAddress: '175/24 Phạm Ngũ Lão, Phường Phạm Ngũ Lão,\nDistrict 1, Ho Chi Minh City 700000, Vietnam',
+        propertyContact: '+84 764 964 293',
+        stampFile: 'agoda-stamp.png',
+        bookedPayableTitle: 'Booked And Payable By :',
+        bookedPayableAddress: 'Agoda Company Pte, Ltd.\n30 Cecil Street, Prudential Tower #19-08,\nSingapore 049712',
+        benefits: 'Express check-in, Free WiFi'
     }
 };
+DESTINATION_PRESETS.ChiangMai = DESTINATION_PRESETS['Chiang Mai'];
+DESTINATION_PRESETS.DaNang = DESTINATION_PRESETS['Da Nang'];
+DESTINATION_PRESETS.HoChiMinh = DESTINATION_PRESETS['Ho Chi Minh'];
+DESTINATION_PRESETS.Saigon = DESTINATION_PRESETS['Ho Chi Minh'];
 
 let cachedAgodaLogoDataUrl = null;
 let cachedAgodaStampDataUrl = null;
@@ -1025,76 +1069,88 @@ export async function generateAgodaPdfDoc(data) {
  * Directly renders the pixel-perfect HTML preview layout into an A4 PDF via html2canvas & jsPDF,
  * guaranteeing 100% exact match to the live preview with zero text clipping or overlapping.
  */
+let isAgodaPdfDownloading = false;
+
 export async function downloadAgodaPdf(data) {
-    const clientName = (data.clientName || 'Guest').trim();
-    const safeName = clientName.replace(/[^a-zA-Z0-9]/g, '_');
-    const safeId = (data.bookingId || 'Agoda').replace(/[^a-zA-Z0-9]/g, '_');
-    const filename = `Agoda_Hotel_Booking_${safeName}_${safeId}.pdf`;
+    if (isAgodaPdfDownloading) {
+        console.warn('downloadAgodaPdf is already in progress, ignoring duplicate trigger.');
+        return null;
+    }
+    isAgodaPdfDownloading = true;
 
-    if (window.html2canvas && window.jspdf) {
-        // Ensure images are preloaded
-        await preloadAgodaAssets();
+    try {
+        const clientName = (data.clientName || 'Guest').trim();
+        const safeName = clientName.replace(/[^a-zA-Z0-9]/g, '_');
+        const safeId = (data.bookingId || 'Agoda').replace(/[^a-zA-Z0-9]/g, '_');
+        const filename = `Agoda_Hotel_Booking_${safeName}_${safeId}.pdf`;
 
-        const container = document.createElement('div');
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.top = '0';
-        container.style.width = '708px';
-        container.style.background = '#ffffff';
-        container.innerHTML = renderAgodaHotelHtml(data);
-        document.body.appendChild(container);
+        if (window.html2canvas && window.jspdf) {
+            // Ensure images are preloaded
+            await preloadAgodaAssets();
 
-        try {
-            const targetNode = container.firstElementChild || container;
-            targetNode.style.width = '708px';
-            targetNode.style.maxWidth = '708px';
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            container.style.width = '708px';
+            container.style.background = '#ffffff';
+            container.innerHTML = renderAgodaHotelHtml(data);
+            document.body.appendChild(container);
 
-            const canvas = await window.html2canvas(targetNode, {
-                scale: 2.5,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            });
+            try {
+                const targetNode = container.firstElementChild || container;
+                targetNode.style.width = '708px';
+                targetNode.style.maxWidth = '708px';
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.98);
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'pt',
-                format: 'a4'
-            });
+                const canvas = await window.html2canvas(targetNode, {
+                    scale: 2.5,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
 
-            // A4 dimensions: 595.28 x 841.89 pt
-            const pdfPageWidth = 595.28;
-            const pdfPageHeight = 841.89;
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'pt',
+                    format: 'a4'
+                });
 
-            // Render with professional margins (20pt left/right, 24pt top)
-            const marginX = 20.0;
-            const marginY = 24.0;
-            const printWidth = pdfPageWidth - (marginX * 2);
-            const imgAspect = canvas.height / canvas.width;
-            let printHeight = printWidth * imgAspect;
+                // A4 dimensions: 595.28 x 841.89 pt
+                const pdfPageWidth = 595.28;
+                const pdfPageHeight = 841.89;
 
-            // Ensure it fits strictly on 1 single page without spilling over
-            const maxPrintHeight = pdfPageHeight - (marginY * 2);
-            if (printHeight > maxPrintHeight) {
-                printHeight = maxPrintHeight;
-            }
+                // Render with professional margins (20pt left/right, 24pt top)
+                const marginX = 20.0;
+                const marginY = 24.0;
+                const printWidth = pdfPageWidth - (marginX * 2);
+                const imgAspect = canvas.height / canvas.width;
+                let printHeight = printWidth * imgAspect;
 
-            pdf.addImage(imgData, 'JPEG', marginX, marginY, printWidth, printHeight);
-            pdf.save(filename);
-            return filename;
-        } finally {
-            if (container.parentNode) {
-                container.parentNode.removeChild(container);
+                // Ensure it fits strictly on 1 single page without spilling over
+                const maxPrintHeight = pdfPageHeight - (marginY * 2);
+                if (printHeight > maxPrintHeight) {
+                    printHeight = maxPrintHeight;
+                }
+
+                pdf.addImage(imgData, 'JPEG', marginX, marginY, printWidth, printHeight);
+                pdf.save(filename);
+                return filename;
+            } finally {
+                if (container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
             }
         }
-    }
 
-    // Fallback to vector jsPDF
-    const doc = await generateAgodaPdfDoc(data);
-    doc.save(filename);
-    return filename;
+        // Fallback to vector jsPDF
+        const doc = await generateAgodaPdfDoc(data);
+        doc.save(filename);
+        return filename;
+    } finally {
+        isAgodaPdfDownloading = false;
+    }
 }
 
 /**
@@ -1272,6 +1328,18 @@ function extractHotelAndAddress(text) {
 function detectHotelDestination(text = '', propertyName = '', propertyAddress = '') {
     const combined = `${text} ${propertyName} ${propertyAddress}`.toLowerCase();
     if (combined.includes('singapore')) return 'Singapore';
+    if (combined.includes('chiang mai') || combined.includes('duangtawan') || combined.includes('cnx') || combined.includes('loi kroh')) {
+        return 'Chiang Mai';
+    }
+    if (combined.includes('hanoi') || combined.includes('ha noi') || combined.includes('alley garden') || combined.includes('nhà chung') || combined.includes('nha chung') || combined.includes('hoàn kiếm') || combined.includes('hoan kiem')) {
+        return 'Hanoi';
+    }
+    if (combined.includes('da nang') || combined.includes('danang') || combined.includes('my khe') || combined.includes('sơn trà') || combined.includes('son tra')) {
+        return 'Da Nang';
+    }
+    if (combined.includes('ho chi minh') || combined.includes('hochíminh') || combined.includes('saigon') || combined.includes('sài gòn') || combined.includes('golden lunar') || combined.includes('phạm ngũ lão') || combined.includes('pham ngu lao')) {
+        return 'Ho Chi Minh';
+    }
     if (combined.includes('guangzhou') || combined.includes('china') || combined.includes('beijing') || combined.includes('shanghai') || combined.includes('shenzhen') || combined.includes('chengdu')) {
         return 'Guangzhou';
     }

@@ -56,7 +56,7 @@
                 </span>
                 <div>
                     <h2>Agoda Hotel Booking</h2>
-                    <p class="service-panel-desc">Generate official Agoda Booking Confirmation (Bangkok, Guangzhou, etc.) with auto-generated IDs</p>
+                    <p class="service-panel-desc">Generate official Agoda Booking Confirmation (Bangkok, Chiang Mai, Guangzhou, etc.) with auto-generated IDs</p>
                 </div>
             </div>
 
@@ -73,7 +73,11 @@
                         <label for="service_hotel_destination">Destination</label>
                         <select id="service_hotel_destination">
                             <option value="Bangkok">Bangkok (Grande Centre Point Ratchadamri)</option>
+                            <option value="Chiang Mai">Chiang Mai (Duangtawan Hotel Chiang Mai)</option>
+                            <option value="Da Nang">Da Nang (My Khe II Hotel)</option>
                             <option value="Guangzhou">Guangzhou (Grand Park Guangzhou)</option>
+                            <option value="Hanoi">Hanoi (Alley Garden Hotel &amp; Spa)</option>
+                            <option value="Ho Chi Minh">Ho Chi Minh (Golden Lunar Hotel)</option>
                             <option value="Kuala Lumpur">Kuala Lumpur (THE FACE Style Hotel)</option>
                             <option value="Singapore">Singapore (Village Hotel Bugis)</option>
                         </select>
@@ -81,6 +85,10 @@
                     <div class="form-group">
                         <label for="service_hotel_client_name">Client / Guest Name</label>
                         <input type="text" id="service_hotel_client_name" placeholder="" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label for="service_hotel_adults">No. of Adults</label>
+                        <input type="number" id="service_hotel_adults" value="1" min="1" max="20" placeholder="1">
                     </div>
                     <div class="form-group">
                         <label for="service_hotel_arrival">Arrival Date</label>
@@ -173,9 +181,13 @@
                                 <label for="agoda_destination" style="font-weight:700;">Select Destination</label>
                                 <select id="agoda_destination" style="font-weight:600;">
                                     <option value="Bangkok">Bangkok (Grande Centre Point Ratchadamri)</option>
-                                    <option value="Guangzhou">Guangzhou (Grand Park Guangzhou)</option>
+                                    <option value="Chiang Mai">Chiang Mai (Duangtawan Hotel Chiang Mai)</option>
+                                    <option value="Da Nang">Da Nang (My Khe II Hotel)</option>
+                                    <option value="Guangzhou">Guangzhou (Grand Park Guangzhou Hotel)</option>
+                                    <option value="Hanoi">Hanoi (Alley Garden Hotel &amp; Spa)</option>
+                                    <option value="Ho Chi Minh">Ho Chi Minh (Golden Lunar Hotel)</option>
                                     <option value="Kuala Lumpur">Kuala Lumpur (THE FACE Style Hotel)</option>
-                                    <option value="Singapore">Singapore (Village Hotel Bugis)</option>
+                                    <option value="Singapore">Singapore (Village Hotel Bugis by Far East Hospitality)</option>
                                 </select>
                             </div>
                         </div>

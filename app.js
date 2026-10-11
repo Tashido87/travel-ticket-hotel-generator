@@ -178,6 +178,9 @@ function initAgodaHotelFeature() {
             if (document.getElementById('service_hotel_departure') && parsedData.departureDate) {
                 document.getElementById('service_hotel_departure').value = parsedData.departureDate;
             }
+            if (document.getElementById('service_hotel_adults') && parsedData.numAdults) {
+                document.getElementById('service_hotel_adults').value = parsedData.numAdults;
+            }
 
             modal.classList.add('show');
             const hotelName = parsedData.propertyName || 'Hotel';
@@ -386,6 +389,7 @@ function initAgodaHotelFeature() {
         const quickDest = document.getElementById('service_hotel_destination')?.value || 'Bangkok';
         const preset = DESTINATION_PRESETS[quickDest] || DESTINATION_PRESETS.Bangkok;
         const quickClient = (document.getElementById('service_hotel_client_name')?.value || '').trim();
+        const quickAdults = parseInt(document.getElementById('service_hotel_adults')?.value || '1', 10) || 1;
         const quickArrival = (document.getElementById('service_hotel_arrival')?.value || '').trim();
         const quickDeparture = (document.getElementById('service_hotel_departure')?.value || '').trim();
 
@@ -401,7 +405,7 @@ function initAgodaHotelFeature() {
             propertyContact: preset.propertyContact,
             numRooms: 1,
             numExtraBeds: 0,
-            numAdults: 1,
+            numAdults: quickAdults,
             numChildren: 0
         });
 
@@ -409,10 +413,14 @@ function initAgodaHotelFeature() {
     });
 
     // Quick Generate
+    let isQuickHotelDownloading = false;
     quickBtn?.addEventListener('click', async () => {
+        if (isQuickHotelDownloading) return;
+
         const quickDest = document.getElementById('service_hotel_destination')?.value || 'Bangkok';
         const preset = DESTINATION_PRESETS[quickDest] || DESTINATION_PRESETS.Bangkok;
         const quickClient = (document.getElementById('service_hotel_client_name')?.value || '').trim();
+        const quickAdults = parseInt(document.getElementById('service_hotel_adults')?.value || '1', 10) || 1;
         const quickArrival = (document.getElementById('service_hotel_arrival')?.value || '').trim();
         const quickDeparture = (document.getElementById('service_hotel_departure')?.value || '').trim();
 
@@ -432,6 +440,12 @@ function initAgodaHotelFeature() {
             return;
         }
 
+        isQuickHotelDownloading = true;
+        quickBtn.disabled = true;
+        const originalQuickHtml = quickBtn.innerHTML;
+        quickBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
+        showToast('Generating Agoda Booking PDF...', 'info');
+
         const data = {
             destination: quickDest,
             bookingId: generateRandomBookingId(),
@@ -444,17 +458,22 @@ function initAgodaHotelFeature() {
             departureDate: formatAgodaDate(quickDeparture),
             numRooms: 1,
             numExtraBeds: 0,
-            numAdults: 1,
+            numAdults: quickAdults,
             numChildren: 0
         };
 
-        showToast('Generating Agoda Booking PDF...', 'info');
         try {
             const filename = await downloadAgodaPdf(data);
-            showToast(`PDF downloaded: ${filename}`, 'success');
+            if (filename) {
+                showToast(`PDF downloaded: ${filename}`, 'success');
+            }
         } catch (e) {
             console.error(e);
             showToast(`Error generating PDF: ${e.message}`, 'error');
+        } finally {
+            isQuickHotelDownloading = false;
+            quickBtn.disabled = false;
+            quickBtn.innerHTML = originalQuickHtml;
         }
     });
 
@@ -466,7 +485,10 @@ function initAgodaHotelFeature() {
         if (e.target === modal) modal.classList.remove('show');
     });
 
+    let isChinaHotelDownloading = false;
     downloadPdfBtn?.addEventListener('click', async () => {
+        if (isChinaHotelDownloading) return;
+
         const clientName = (document.getElementById('agoda_client_name')?.value || '').trim();
         const arrivalDate = (document.getElementById('agoda_arrival_date')?.value || '').trim();
         const departureDate = (document.getElementById('agoda_departure_date')?.value || '').trim();
@@ -487,17 +509,25 @@ function initAgodaHotelFeature() {
             return;
         }
 
+        isChinaHotelDownloading = true;
+        downloadPdfBtn.disabled = true;
+        const originalBtnHtml = downloadPdfBtn.innerHTML;
+        downloadPdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
         showToast('Generating official Agoda PDF...', 'info');
+
         try {
-            downloadPdfBtn.disabled = true;
             const data = collectFormData();
             const filename = await downloadAgodaPdf(data);
-            showToast(`PDF downloaded: ${filename}`, 'success');
+            if (filename) {
+                showToast(`PDF downloaded: ${filename}`, 'success');
+            }
         } catch (err) {
             console.error('PDF generation error:', err);
             showToast(`PDF generation failed: ${err.message}`, 'error');
         } finally {
+            isChinaHotelDownloading = false;
             downloadPdfBtn.disabled = false;
+            downloadPdfBtn.innerHTML = originalBtnHtml;
         }
     });
 }
