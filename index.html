@@ -217,8 +217,13 @@
 
                         <div class="airasia-form-row">
                             <div class="airasia-form-group" style="grid-column: 1 / -1;">
-                                <label for="agoda_booking_ref_no">Booking Reference No. (Optional)</label>
-                                <input type="text" id="agoda_booking_ref_no" placeholder="Leave empty or enter supplier ref">
+                                <label for="agoda_booking_ref_no">Booking Reference No. (9 digits)</label>
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="agoda_booking_ref_no" placeholder="e.g. 754921638" style="font-weight:700;">
+                                    <button type="button" class="btn-service btn-secondary btn-sm" id="agoda_roll_booking_ref_no" title="Generate New Booking Reference No">
+                                        <i class="fa-solid fa-arrows-rotate"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

@@ -11,6 +11,7 @@ import {
     shareAgodaBooking,
     generateRandomBookingId,
     generateRandomMemberId,
+    generateRandomBookingRefNo,
     formatAgodaDate,
     calculateDefaultCancellationDate,
     DESTINATION_PRESETS,
@@ -142,6 +143,7 @@ function initAgodaHotelFeature() {
     const previewContainer = document.getElementById('agodaPreviewContainer');
     const rollBookingBtn = document.getElementById('agoda_roll_booking_id');
     const rollMemberBtn = document.getElementById('agoda_roll_member_id');
+    const rollBookingRefBtn = document.getElementById('agoda_roll_booking_ref_no');
     const destSelect = document.getElementById('agoda_destination');
 
     // Agoda PDF Drop Zone & File Input
@@ -223,7 +225,7 @@ function initAgodaHotelFeature() {
             destination: dest,
             bookingId: document.getElementById('agoda_booking_id')?.value || generateRandomBookingId(),
             memberId: document.getElementById('agoda_member_id')?.value || generateRandomMemberId(),
-            bookingRefNo: document.getElementById('agoda_booking_ref_no')?.value || '',
+            bookingRefNo: (document.getElementById('agoda_booking_ref_no')?.value || '').trim() || generateRandomBookingRefNo(),
             clientName: (document.getElementById('agoda_client_name')?.value || '').trim().toUpperCase(),
             countryOfResidence: document.getElementById('agoda_country')?.value || 'Myanmar',
             numAdults: parseInt(document.getElementById('agoda_num_adults')?.value || '1', 10),
@@ -262,7 +264,7 @@ function initAgodaHotelFeature() {
             document.getElementById('agoda_member_id').value = data.memberId || generateRandomMemberId();
         }
         if (document.getElementById('agoda_booking_ref_no')) {
-            document.getElementById('agoda_booking_ref_no').value = data.bookingRefNo || '';
+            document.getElementById('agoda_booking_ref_no').value = data.bookingRefNo || generateRandomBookingRefNo();
         }
         if (document.getElementById('agoda_client_name')) {
             document.getElementById('agoda_client_name').value = data.clientName || '';
@@ -384,6 +386,15 @@ function initAgodaHotelFeature() {
         }
     });
 
+    rollBookingRefBtn?.addEventListener('click', () => {
+        const el = document.getElementById('agoda_booking_ref_no');
+        if (el) {
+            el.value = generateRandomBookingRefNo();
+            updatePreview();
+            showToast('New Booking Reference No generated!', 'info');
+        }
+    });
+
     // Open Hotel Editor
     openBtn?.addEventListener('click', () => {
         const quickDest = document.getElementById('service_hotel_destination')?.value || 'Bangkok';
@@ -397,6 +408,7 @@ function initAgodaHotelFeature() {
             destination: quickDest,
             bookingId: generateRandomBookingId(),
             memberId: generateRandomMemberId(),
+            bookingRefNo: generateRandomBookingRefNo(),
             clientName: quickClient || '',
             arrivalDate: quickArrival ? formatAgodaDate(quickArrival) : '',
             departureDate: quickDeparture ? formatAgodaDate(quickDeparture) : '',
@@ -450,6 +462,7 @@ function initAgodaHotelFeature() {
             destination: quickDest,
             bookingId: generateRandomBookingId(),
             memberId: generateRandomMemberId(),
+            bookingRefNo: generateRandomBookingRefNo(),
             clientName: quickClient,
             propertyName: preset.propertyName,
             propertyAddress: preset.propertyAddress,
