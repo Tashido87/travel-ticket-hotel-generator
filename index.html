@@ -126,20 +126,20 @@
                 </span>
                 <div>
                     <h2>E-Ticket Generator</h2>
-                    <p class="service-panel-desc">Auto-detects Trip.com / OTA PDF itinerary and converts into official AirAsia, VietJet Air, Thai Airways, Singapore Airlines, EVA Air, or Scoot E-Ticket</p>
+                    <p class="service-panel-desc">Auto-detects Trip.com / OTA PDF itinerary or travel schedule image and converts into official China Airlines, AirAsia, VietJet Air, Thai Airways, Singapore Airlines, EVA Air, or Scoot E-Ticket</p>
                 </div>
             </div>
 
             <div class="airasia-upload-zone" id="airAsiaDropZone" style="border-color: rgba(13, 110, 119, 0.4); background: rgba(13, 110, 119, 0.03);">
                 <i class="fa-solid fa-file-pdf airasia-upload-icon" style="color: #0D6E77;"></i>
-                <div class="airasia-upload-title">Drop Trip.com / OTA / Airline PDF here or click to browse</div>
-                <div class="airasia-upload-sub">Auto-detects AirAsia, VietJet Air, Thai Airways, Singapore Airlines, EVA Air & Scoot, extracts PNR, passengers, schedule & baggage</div>
-                <input type="file" id="airAsiaFileInput" accept=".pdf" style="display: none;">
+                <div class="airasia-upload-title">Drop Trip.com / OTA PDF or Travel Schedule Image here or click to browse</div>
+                <div class="airasia-upload-sub">Auto-detects China Airlines, AirAsia, VietJet Air, Thai Airways, Singapore Airlines, EVA Air & Scoot, extracts PNR, passengers, schedule & baggage</div>
+                <input type="file" id="airAsiaFileInput" accept=".pdf,image/png,image/jpeg,image/webp" style="display: none;">
             </div>
 
             <div class="service-actions">
                 <button type="button" class="btn-service btn-generate" id="airAsiaUploadBtn" style="background: #0D6E77; border-color: #0D6E77;">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Choose PDF File
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Choose PDF / Image
                 </button>
                 <button type="button" class="btn-service btn-clear" id="airAsiaManualBtn">
                     <i class="fa-solid fa-pen-to-square"></i> Manual / Blank Form
@@ -381,6 +381,7 @@ Bangkok (and vicinity), Thailand</textarea>
                                 <label for="aa_airline_select" style="font-weight:700;">Airline Template</label>
                                 <select id="aa_airline_select" style="font-weight:600;">
                                     <option value="AirAsia">AirAsia (Red Template)</option>
+                                    <option value="China Airlines">China Airlines (Official Receipt Template)</option>
                                     <option value="VietJet Air">VietJet Air (Red Template)</option>
                                     <option value="Thai Airways">Thai Airways (Purple & Gold Template)</option>
                                     <option value="Singapore Airlines">Singapore Airlines (SQ Blue & Gold Template)</option>
@@ -466,6 +467,9 @@ Bangkok (and vicinity), Thailand</textarea>
 
             <div class="modal-footer">
                 <button type="button" class="btn-service btn-secondary" id="airAsiaCancelBtn">Cancel</button>
+                <button type="button" class="btn-service btn-secondary" id="airAsiaDownloadImageBtn">
+                    <i class="fa-solid fa-file-image"></i> Export Image
+                </button>
                 <button type="button" class="btn-service btn-primary" id="airAsiaDownloadPdfBtn">
                     <i class="fa-solid fa-file-pdf"></i> Download PDF
                 </button>

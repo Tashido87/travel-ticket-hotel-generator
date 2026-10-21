@@ -25,7 +25,11 @@ import {
     downloadAirAsiaPdf,
     downloadAirAsiaImage,
     shareAirAsiaTicket,
-    formatCheckedBaggageLine
+    formatCheckedBaggageLine,
+    parseTripScheduleImage,
+    parseItinerarySchedule,
+    formatPassengerName,
+    generateRandomSeat
 } from './airasia-converter.js';
 
 // --- DATE HELPER & PAIRED DATEPICKER LOGIC ---
@@ -628,6 +632,15 @@ function initAirAsiaFeature() {
                 el.addEventListener('change', updatePreview);
             });
 
+            const paxNameInput = row.querySelector('.aa_pax_name_input');
+            paxNameInput?.addEventListener('blur', () => {
+                const currentAirline = document.getElementById('aa_airline_select')?.value;
+                if (currentAirline === 'China Airlines' && paxNameInput.value.trim() && typeof formatPassengerName === 'function') {
+                    paxNameInput.value = formatPassengerName(paxNameInput.value);
+                    updatePreview();
+                }
+            });
+
             row.querySelector('.aa_remove_pax_btn').addEventListener('click', () => {
                 const totalRows = container.querySelectorAll('.aa_pax_row').length;
                 if (totalRows <= 1) {
@@ -978,10 +991,25 @@ function initAirAsiaFeature() {
             renderFlightRows(currentFlights);
         } else if (selectedAirline === 'AirAsia') {
             currentFlights.forEach(f => {
-                if (!f.airlineName || /vietjet|thai|singapore|scoot/i.test(f.airlineName)) f.airlineName = 'AirAsia Berhad';
-                if (!f.flightNo || /^(VJ|TG|SQ|TR)/i.test(f.flightNo)) f.flightNo = 'AK';
+                if (!f.airlineName || /vietjet|thai|singapore|scoot|china/i.test(f.airlineName)) f.airlineName = 'AirAsia Berhad';
+                if (!f.flightNo || /^(VJ|TG|SQ|TR|CI)/i.test(f.flightNo)) f.flightNo = 'AK';
             });
             renderFlightRows(currentFlights);
+        } else if (selectedAirline === 'China Airlines') {
+            currentFlights.forEach(f => {
+                if (!f.airlineName || /airasia|vietjet|thai|singapore|scoot|eva/i.test(f.airlineName)) {
+                    f.airlineName = 'CHINA AIRLINES LTD.';
+                }
+                if (!f.flightNo || /^(AK|VJ|TG|SQ|TR|BR)/i.test(f.flightNo)) {
+                    f.flightNo = 'CI 834';
+                }
+            });
+            renderFlightRows(currentFlights);
+            const container = document.getElementById('aa_passengers_list');
+            const firstPax = container?.querySelector('.aa_pax_name_input');
+            if (firstPax && firstPax.value.trim() && typeof formatPassengerName === 'function') {
+                firstPax.value = formatPassengerName(firstPax.value);
+            }
         }
         updatePreview();
     });
@@ -1009,24 +1037,29 @@ function initAirAsiaFeature() {
         } else if (selectedA === 'VietJet Air') {
             defaultAirlineName = 'VietJet Air';
             defaultFlightNo = 'VJ';
+        } else if (selectedA === 'China Airlines') {
+            defaultAirlineName = 'CHINA AIRLINES LTD.';
+            defaultFlightNo = 'CI 834';
         }
 
         const safeAirlineName = (primaryFlight.airlineName && (
-            (selectedA === 'Scoot' && !/airasia|vietjet|thai|singapore|eva/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'EVA Air' && !/airasia|vietjet|thai|singapore|scoot/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'Singapore Airlines' && !/airasia|vietjet|thai|eva|scoot/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'Thai Airways' && !/airasia|vietjet|singapore|eva|scoot/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'VietJet Air' && !/airasia|thai|singapore|eva|scoot/i.test(primaryFlight.airlineName)) ||
-            (selectedA === 'AirAsia' && !/vietjet|thai|singapore|eva|scoot/i.test(primaryFlight.airlineName))
+            (selectedA === 'Scoot' && !/airasia|vietjet|thai|singapore|eva|china/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'EVA Air' && !/airasia|vietjet|thai|singapore|scoot|china/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'Singapore Airlines' && !/airasia|vietjet|thai|eva|scoot|china/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'Thai Airways' && !/airasia|vietjet|singapore|eva|scoot|china/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'VietJet Air' && !/airasia|thai|singapore|eva|scoot|china/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'AirAsia' && !/vietjet|thai|singapore|eva|scoot|china/i.test(primaryFlight.airlineName)) ||
+            (selectedA === 'China Airlines' && !/airasia|vietjet|thai|singapore|eva|scoot/i.test(primaryFlight.airlineName))
         )) ? primaryFlight.airlineName : defaultAirlineName;
 
         const safeFlightNo = (primaryFlight.flightNo && (
-            (selectedA === 'Scoot' && !/^(AK|VJ|TG|SQ|BR)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'EVA Air' && !/^(AK|VJ|TG|SQ|TR)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'Singapore Airlines' && !/^(AK|VJ|TG|BR|TR)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'Thai Airways' && !/^(AK|VJ|SQ|BR|TR)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'VietJet Air' && !/^(AK|TG|SQ|BR|TR)/i.test(primaryFlight.flightNo)) ||
-            (selectedA === 'AirAsia' && !/^(VJ|TG|SQ|BR|TR)/i.test(primaryFlight.flightNo))
+            (selectedA === 'Scoot' && !/^(AK|VJ|TG|SQ|BR|CI)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'EVA Air' && !/^(AK|VJ|TG|SQ|TR|CI)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'Singapore Airlines' && !/^(AK|VJ|TG|BR|TR|CI)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'Thai Airways' && !/^(AK|VJ|SQ|BR|TR|CI)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'VietJet Air' && !/^(AK|TG|SQ|BR|TR|CI)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'AirAsia' && !/^(VJ|TG|SQ|BR|TR|CI)/i.test(primaryFlight.flightNo)) ||
+            (selectedA === 'China Airlines' && !/^(AK|VJ|TG|SQ|BR|TR)/i.test(primaryFlight.flightNo))
         )) ? primaryFlight.flightNo : defaultFlightNo;
 
         const formPnr = (document.getElementById('aa_pnr')?.value || '').trim().toUpperCase();
@@ -1047,7 +1080,8 @@ function initAirAsiaFeature() {
             pnr: effectivePnr,
             pnrs: sectorPnrs,
             eTicketNo: document.getElementById('aa_eticket_no')?.value || '',
-            flightClass: document.getElementById('aa_class')?.value || (selectedA === 'Thai Airways' ? 'Economy (T)' : 'Economy'),
+            flightClass: document.getElementById('aa_class')?.value || (selectedA === 'China Airlines' ? 'Economy, Y' : (selectedA === 'Thai Airways' ? 'Economy (T)' : 'Economy')),
+            cabinClass: document.getElementById('aa_class')?.value || (selectedA === 'China Airlines' ? 'Economy, Y' : (selectedA === 'Thai Airways' ? 'Economy (T)' : 'Economy')),
             issuedDate: document.getElementById('aa_issued_date')?.value || '',
             checkinNotice: document.getElementById('aa_checkin_notice')?.value || '',
             passengers: passengers,
@@ -1140,25 +1174,75 @@ function initAirAsiaFeature() {
     });
 
     async function handleFile(file) {
-        if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
-            showToast('Please select a valid PDF file.', 'error');
+        if (!file) return;
+        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+        const isImg = /\.(png|jpe?g|webp)$/i.test(file.name) || file.type.startsWith('image/');
+        if (!isPdf && !isImg) {
+            showToast('Please select a valid PDF file or travel schedule image (PNG/JPG/WEBP).', 'error');
             return;
         }
 
-        showToast('Extracting itinerary from PDF...', 'info');
         try {
-            const rawText = await extractTextFromPdf(file);
-            if (!rawText || rawText.trim().length < 30) {
-                showToast('Could not extract text from PDF (it might be a scanned image). Opening form for manual review.', 'warning');
+            let parsedData;
+            if (isImg) {
+                showToast('Analyzing travel schedule image (OCR)...', 'info');
+                const parsedSchedule = await parseTripScheduleImage(file);
+                const flights = (parsedSchedule.flights && parsedSchedule.flights.length > 0) ? parsedSchedule.flights.map(f => ({
+                    flightNo: f.flightNo || '',
+                    airlineName: f.airlineName || f.operatedBy || 'AirAsia Berhad',
+                    duration: f.duration || '',
+                    aircraft: f.aircraft || 'Airbus A320neo',
+                    cabinClass: f.cabinClass || f.flightClass || 'Economy, Y',
+                    flightClass: f.cabinClass || f.flightClass || 'Economy, Y',
+                    seat: f.seat || (typeof generateRandomSeat === 'function' ? generateRandomSeat() : '12A'),
+                    depTime: f.depTime || '',
+                    depDateFormatted: f.depDateFormatted || f.depDate || '',
+                    depAirport: f.depAirport || f.from || '',
+                    depTerminal: f.depTerminal || '',
+                    arrTime: f.arrTime || '',
+                    arrDateFormatted: f.arrDateFormatted || f.arrDate || '',
+                    arrAirport: f.arrAirport || f.to || '',
+                    arrTerminal: f.arrTerminal || '',
+                    route: f.route || (f.fromCode && f.toCode ? `${f.fromCode} - ${f.toCode}` : '')
+                })) : [];
+
+                parsedData = {
+                    airline: parsedSchedule.detectedAirline || 'China Airlines',
+                    pnr: parsedSchedule.pnr || '',
+                    bookingNo: parsedSchedule.pnr || '',
+                    eTicketNo: parsedSchedule.ticketNo || '',
+                    issuedDate: '',
+                    flightClass: 'Economy, Y',
+                    passengerName: parsedSchedule.passengerName || '',
+                    passengers: [{ name: parsedSchedule.passengerName || '', type: 'Adult' }],
+                    flights
+                };
+            } else {
+                showToast('Extracting itinerary from PDF...', 'info');
+                const rawText = await extractTextFromPdf(file);
+                if (!rawText || rawText.trim().length < 30) {
+                    showToast('Could not extract text from PDF (it might be a scanned image). Opening form for manual review.', 'warning');
+                }
+                parsedData = parseItineraryText(rawText);
+                if ((!parsedData.flights || parsedData.flights.length === 0) && typeof parseItinerarySchedule === 'function') {
+                    const altSchedule = parseItinerarySchedule(rawText);
+                    if (altSchedule.flights && altSchedule.flights.length > 0) {
+                        parsedData.flights = altSchedule.flights;
+                        parsedData.airline = altSchedule.detectedAirline || parsedData.airline;
+                        parsedData.pnr = parsedData.pnr || altSchedule.pnr;
+                        parsedData.passengerName = altSchedule.passengerName || '';
+                        parsedData.passengers = [{ name: altSchedule.passengerName || '', type: 'Adult' }];
+                    }
+                }
             }
-            const parsedData = parseItineraryText(rawText);
+
             populateForm(parsedData);
             modal.classList.add('show');
             const detectedName = parsedData.airline || 'Airline';
             showToast(`${detectedName} ticket data extracted successfully!`, 'success');
         } catch (err) {
-            console.error('PDF parsing error:', err);
-            showToast(`PDF parsing failed: ${err.message}`, 'error');
+            console.error('File parsing error:', err);
+            showToast(`Parsing failed: ${err.message}`, 'error');
         }
     }
 
@@ -1224,6 +1308,13 @@ function initAirAsiaFeature() {
     let isAirAsiaDownloading = false;
     downloadPdfBtn?.addEventListener('click', async () => {
         if (isAirAsiaDownloading) return;
+        const paxName = (document.querySelector('.aa_pax_name_input')?.value || '').trim();
+        if (!paxName) {
+            showToast('Please enter passenger name before downloading ticket.', 'warning');
+            const input = document.querySelector('.aa_pax_name_input');
+            if (input) input.focus();
+            return;
+        }
         isAirAsiaDownloading = true;
 
         try {
@@ -1232,7 +1323,7 @@ function initAirAsiaFeature() {
             const data = collectFormData();
             const filename = await downloadAirAsiaPdf(data);
             if (filename) {
-                showToast(`AirAsia PDF downloaded: ${filename}`, 'success');
+                showToast(`E-Ticket PDF downloaded: ${filename}`, 'success');
             }
         } catch (err) {
             console.error('PDF generation error:', err);
@@ -1241,6 +1332,37 @@ function initAirAsiaFeature() {
             isAirAsiaDownloading = false;
             downloadPdfBtn.disabled = false;
             downloadPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download PDF';
+        }
+    });
+
+    const downloadImageBtn = document.getElementById('airAsiaDownloadImageBtn');
+    let isAirAsiaImageDownloading = false;
+    downloadImageBtn?.addEventListener('click', async () => {
+        if (isAirAsiaImageDownloading) return;
+        const paxName = (document.querySelector('.aa_pax_name_input')?.value || '').trim();
+        if (!paxName) {
+            showToast('Please enter passenger name before exporting image.', 'warning');
+            const input = document.querySelector('.aa_pax_name_input');
+            if (input) input.focus();
+            return;
+        }
+        isAirAsiaImageDownloading = true;
+
+        try {
+            downloadImageBtn.disabled = true;
+            downloadImageBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting Image...';
+            const data = collectFormData();
+            const filename = await downloadAirAsiaImage(data);
+            if (filename) {
+                showToast(`E-Ticket Image exported: ${filename}`, 'success');
+            }
+        } catch (err) {
+            console.error('Image export error:', err);
+            showToast(`Could not export image: ${err.message}`, 'error');
+        } finally {
+            isAirAsiaImageDownloading = false;
+            downloadImageBtn.disabled = false;
+            downloadImageBtn.innerHTML = '<i class="fa-solid fa-file-image"></i> Export Image';
         }
     });
 }
