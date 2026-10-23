@@ -735,10 +735,25 @@ export async function downloadChinaAirlinesImage(data) {
         throw new Error('html2canvas library is not loaded');
     }
     const previewEl = document.getElementById('chinaAirlinesTicketDocument');
-    if (!previewEl) return;
+    let offscreenContainer = null;
+    let targetEl = previewEl;
+
+    // On mobile screens, the preview container is display: none.
+    // Create an offscreen container to render html2canvas reliably.
+    if (!targetEl || targetEl.offsetParent === null) {
+        offscreenContainer = document.createElement('div');
+        offscreenContainer.style.position = 'fixed';
+        offscreenContainer.style.left = '-9999px';
+        offscreenContainer.style.top = '0';
+        offscreenContainer.style.width = '800px';
+        offscreenContainer.style.background = '#ffffff';
+        offscreenContainer.innerHTML = renderChinaAirlinesTicketHtml(data);
+        document.body.appendChild(offscreenContainer);
+        targetEl = offscreenContainer.firstElementChild || offscreenContainer;
+    }
 
     try {
-        const canvas = await window.html2canvas(previewEl, {
+        const canvas = await window.html2canvas(targetEl, {
             scale: 2.5,
             useCORS: true,
             backgroundColor: '#ffffff'
@@ -758,6 +773,10 @@ export async function downloadChinaAirlinesImage(data) {
         console.error('Image export error:', err);
         showToast('Failed to export image.', 'error');
         throw err;
+    } finally {
+        if (offscreenContainer?.parentNode) {
+            offscreenContainer.parentNode.removeChild(offscreenContainer);
+        }
     }
 }
 
