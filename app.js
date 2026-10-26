@@ -866,9 +866,14 @@ function initAirAsiaFeature() {
         if (isStandardLayoutAirline && bagCheckedEl) {
             bagCheckedEl.value = formatCheckedBaggageLine(currentBagVal);
         } else if (!isStandardLayoutAirline && bagCheckedEl && currentBagVal.startsWith('Checked:')) {
-            const kgMatch = currentBagVal.match(/(\d+)\s*kg/i);
-            const kg = kgMatch ? kgMatch[1] : (selectedAirline === 'VietJet Air' ? '20' : '30');
-            bagCheckedEl.value = `${kg} kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm`;
+            if (/(?:no\s*free|no\s*checked|(?<!\d)0\s*(?:kg|pcs?|pieces?)\b|\bnil\b|\bnone\b|\bnot\s*included\b)/i.test(currentBagVal)) {
+                bagCheckedEl.value = 'No free baggage allowance\nOptional checked baggage can be purchased separately';
+            } else {
+                const checkedOnly = currentBagVal.replace(/\|\s*Carry-on[\s\S]*/i, '');
+                const kgMatch = checkedOnly.match(/(\d+)\s*kg/i);
+                const kg = kgMatch ? kgMatch[1] : (selectedAirline === 'VietJet Air' ? '20' : '30');
+                bagCheckedEl.value = `${kg} kg per person\nDimensions of each piece cannot exceed 119 x 119 x 81 cm`;
+            }
         }
 
         if (selectedAirline === 'Scoot') {
@@ -1352,7 +1357,10 @@ function initAirAsiaFeature() {
                     flightClass: 'Economy, Y',
                     passengerName: parsedSchedule.passengerName || '',
                     passengers: [{ name: parsedSchedule.passengerName || '', type: 'Adult' }],
-                    flights
+                    flights,
+                    checkedBaggage: parsedSchedule.checkedBaggage,
+                    carryOnBaggage: parsedSchedule.carryOnBaggage,
+                    personalItem: parsedSchedule.personalItem
                 };
             } else {
                 showToast('Extracting itinerary from PDF...', 'info');
@@ -1369,6 +1377,9 @@ function initAirAsiaFeature() {
                         parsedData.pnr = parsedData.pnr || altSchedule.pnr;
                         parsedData.passengerName = altSchedule.passengerName || '';
                         parsedData.passengers = [{ name: altSchedule.passengerName || '', type: 'Adult' }];
+                        if (altSchedule.checkedBaggage && !parsedData.checkedBaggage) {
+                            parsedData.checkedBaggage = altSchedule.checkedBaggage;
+                        }
                     }
                 }
             }
