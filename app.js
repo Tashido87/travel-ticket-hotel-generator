@@ -178,6 +178,9 @@ function initAgodaHotelFeature() {
             if (document.getElementById('service_hotel_client_name') && parsedData.clientName) {
                 document.getElementById('service_hotel_client_name').value = parsedData.clientName;
             }
+            if (document.getElementById('service_hotel_country') && parsedData.countryOfResidence) {
+                document.getElementById('service_hotel_country').value = parsedData.countryOfResidence;
+            }
             if (document.getElementById('service_hotel_arrival') && parsedData.arrivalDate) {
                 document.getElementById('service_hotel_arrival').value = parsedData.arrivalDate;
             }
@@ -404,6 +407,7 @@ function initAgodaHotelFeature() {
         const quickDest = document.getElementById('service_hotel_destination')?.value || 'Bangkok';
         const preset = DESTINATION_PRESETS[quickDest] || DESTINATION_PRESETS.Bangkok;
         const quickClient = (document.getElementById('service_hotel_client_name')?.value || '').trim();
+        const quickCountry = (document.getElementById('service_hotel_country')?.value || '').trim() || 'Myanmar';
         const quickAdults = parseInt(document.getElementById('service_hotel_adults')?.value || '1', 10) || 1;
         const quickArrival = (document.getElementById('service_hotel_arrival')?.value || '').trim();
         const quickDeparture = (document.getElementById('service_hotel_departure')?.value || '').trim();
@@ -414,6 +418,7 @@ function initAgodaHotelFeature() {
             memberId: generateRandomMemberId(),
             bookingRefNo: generateRandomBookingRefNo(),
             clientName: quickClient || '',
+            countryOfResidence: quickCountry,
             arrivalDate: quickArrival ? formatAgodaDate(quickArrival) : '',
             departureDate: quickDeparture ? formatAgodaDate(quickDeparture) : '',
             propertyName: preset.propertyName,
@@ -436,6 +441,7 @@ function initAgodaHotelFeature() {
         const quickDest = document.getElementById('service_hotel_destination')?.value || 'Bangkok';
         const preset = DESTINATION_PRESETS[quickDest] || DESTINATION_PRESETS.Bangkok;
         const quickClient = (document.getElementById('service_hotel_client_name')?.value || '').trim();
+        const quickCountry = (document.getElementById('service_hotel_country')?.value || '').trim() || 'Myanmar';
         const quickAdults = parseInt(document.getElementById('service_hotel_adults')?.value || '1', 10) || 1;
         const quickArrival = (document.getElementById('service_hotel_arrival')?.value || '').trim();
         const quickDeparture = (document.getElementById('service_hotel_departure')?.value || '').trim();
@@ -468,6 +474,7 @@ function initAgodaHotelFeature() {
             memberId: generateRandomMemberId(),
             bookingRefNo: generateRandomBookingRefNo(),
             clientName: quickClient,
+            countryOfResidence: quickCountry,
             propertyName: preset.propertyName,
             propertyAddress: preset.propertyAddress,
             propertyContact: preset.propertyContact,

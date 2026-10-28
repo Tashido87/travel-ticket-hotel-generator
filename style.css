@@ -40,7 +40,7 @@ body {
 
 /* App Header */
 .app-header {
-    max-width: 960px;
+    max-width: 1280px;
     margin: 0 auto 28px;
     display: flex;
     justify-content: space-between;
@@ -94,7 +94,7 @@ body {
 
 /* Container */
 .main-wrapper {
-    max-width: 960px;
+    max-width: 1280px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -157,9 +157,36 @@ body {
 
 .quick-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: 1.4fr 1.15fr 1.15fr 0.85fr 1fr 1fr;
     gap: 12px;
     margin-bottom: 12px;
+    align-items: end;
+}
+
+.quick-grid .form-group {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.quick-grid label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 1080px) {
+    .quick-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .quick-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .quick-info-note {
