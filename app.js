@@ -501,13 +501,9 @@ function initAgodaHotelFeature() {
         }
     });
 
-    // Modal buttons
-    closeBtn?.addEventListener('click', () => modal.classList.remove('show'));
+    // Modal buttons (only Cancel closes modal; backdrop click and close icon disabled)
+    if (closeBtn) closeBtn.style.display = 'none';
     cancelBtn?.addEventListener('click', () => modal.classList.remove('show'));
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('show');
-    });
 
     let isChinaHotelDownloading = false;
     downloadPdfBtn?.addEventListener('click', async () => {
@@ -1464,12 +1460,8 @@ function initAirAsiaFeature() {
         modal.classList.add('show');
     });
 
-    closeBtn?.addEventListener('click', () => modal.classList.remove('show'));
+    if (closeBtn) closeBtn.style.display = 'none';
     cancelBtn?.addEventListener('click', () => modal.classList.remove('show'));
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('show');
-    });
 
     let isAirAsiaDownloading = false;
     downloadPdfBtn?.addEventListener('click', async () => {
@@ -1546,13 +1538,6 @@ window.addEventListener('DOMContentLoaded', () => {
             year: 'numeric'
         });
     }
-
-    // Escape key closes modals
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
-        }
-    });
 
     initDatepickers();
     initAgodaHotelFeature();
